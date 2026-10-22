@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="firebase-app-check-site-key" content="">
+    <meta name="firebase-storage-bucket" content="">
+    <meta name="kingmenu-environment" content="demo">
+    <title>KingMenu | Alta Cocina Imperial de Cartagena</title>
+
+    <!-- Dependencias Externas -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Manrope:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght=0,400;0,600;0,700;1,400&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js" integrity="sha384-OIQZlttB2MRaZyoi526rVHiNUGYEq4MAMxDbTkwghmmqxs556T5g5LY926GH7NYM" crossorigin="anonymous"></script>
+    <!-- GSAP + ScrollTrigger -->
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js" integrity="sha384-g4NTh/Iv5PPU4xPyhEWqPcwtNXOvdaDI8LLnyYfyNZOjKJeYQyjzQ9X5275eBjpt" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js" integrity="sha384-Z3REaz79l2IaAZqJsSABtTbhjgOUYyV3p90XNnAPCSHg3EMTz1fouunq9WZRtj3d" crossorigin="anonymous"></script>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+            }
+        }
+    </script>
+    <!-- Configuración de Diseño -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Manrope', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                        display: ['Cinzel', 'serif'],
+                    },
+                    colors: {
+                        king: {
+                            base: '#030303',      /* Negro Absoluto */
+                            surface: '#090909',   /* Carbón Elegante */
+                            card: '#0f0f0f',      /* Obsidiana Premium */
+                            highlight: '#161616', /* Gris de Selección */
+                            gold: '#D4AF37',      /* Oro Imperial de 24k */
+                            goldHover: '#B5952F', /* Oro de Transición */
+                            goldLight: '#F3E5AB', /* Oro Pálido Cristalino */
+                            danger: '#ef4444',
+                            success: '#10b981'
+                        }
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                        'slide-up': 'slideUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                        'slide-in-right': 'slideInRight 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                        'pulse-slow': 'pulse 4s infinite',
+                        'sparkle': 'sparkleAnimation 3s infinite',
+                        'glow-gold': 'glowGold 3s infinite alternate'
+                    },
+                    keyframes: {
+                        fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+                        slideUp: { '0%': { opacity: '0', transform: 'translateY(40px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
+                        slideInRight: { '0%': { transform: 'translateX(100%)', opacity: '0' }, '100%': { transform: 'translateX(0)', opacity: '1' } },
+                        sparkleAnimation: { '0%, 100%': { opacity: '0.6', transform: 'scale(1)' }, '50%': { opacity: '1', transform: 'scale(1.03)' } },
+                        glowGold: { '0%': { boxShadow: '0 0 5px rgba(212, 175, 55, 0.2)' }, '100%': { boxShadow: '0 0 20px rgba(212, 175, 55, 0.6)' } }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Estilos de Alta Gama KingMenu -->
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body class="custom-scroll selection:bg-king-gold selection:text-black">
+
+    <div class="grain-overlay"></div>
+    <div id="admin-login-host"></div>
+
+    <div id="experience-root" class="experience-shell relative min-h-screen overflow-hidden bg-king-base text-white">
+        <div class="experience-grid" aria-hidden="true"></div>
+
+        <header class="experience-header relative z-20 mx-auto flex w-full max-w-7xl items-center justify-between px-5 py-5 md:px-10 md:py-7">
+            <button class="experience-brand text-left" type="button" data-experience-home data-i18n-aria-label="experience_home_aria" aria-label="Volver a la carta">
+                <span class="font-display text-xl font-bold tracking-[0.12em]">KINGMENU <span class="text-white/45">| Alta Cocina</span></span>
+            </button>
+            <nav class="experience-header-actions" aria-label="Accesos rápidos">
+                <a href="#experience-menu" class="experience-header-link" data-experience-nav="categories" data-i18n="experience_nav_categories">Carta</a>
+                <span id="active-table-badge" class="active-table-badge hidden" aria-label="Mesa activa">
+                    <i class="fa-solid fa-chair" aria-hidden="true"></i>
+                    <span id="active-table-label"></span>
+                </span>
+                <button type="button" class="experience-utility-button" data-action="toggle-language" data-i18n-title="language_toggle_title" data-i18n-aria-label="language_toggle_title" title="Cambiar idioma" aria-label="Cambiar idioma">
+                    <i class="fa-solid fa-globe" aria-hidden="true"></i><span data-language-indicator>ES</span>
+                </button>
+                <button type="button" class="experience-utility-button" data-experience-orders data-i18n-aria-label="experience_orders_aria" data-i18n-title="experience_orders_title" aria-label="Ver estado de mis pedidos" title="Mis pedidos"><i class="fa-solid fa-receipt" aria-hidden="true"></i></button>
+                <button type="button" class="experience-utility-button" data-experience-waiter data-i18n-aria-label="experience_waiter_aria" data-i18n-title="experience_waiter_title" aria-label="Solicitar asistencia" title="Llamar mesero"><i class="fa-solid fa-bell" aria-hidden="true"></i></button>
+            </nav>
+        </header>
+
+        <main id="experience" class="relative z-10">
+            <section id="experience-menu" class="experience-view experience-menu min-h-[calc(100svh-88px)] px-5 pb-16 pt-3 md:px-10" aria-labelledby="menu-title" aria-hidden="false">
+                <div class="mx-auto max-w-7xl">
+                    <div class="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+                        <div>
+                            <p class="hud-label text-cyan-100/55" data-i18n="experience_categories_eyebrow">Carta</p>
+                            <h2 id="menu-title" class="mt-2 font-display text-3xl tracking-[0.12em] md:text-5xl" data-i18n="experience_categories_title">Nuestra carta</h2>
+                        </div>
+                        <p class="max-w-xs text-xs leading-6 text-white/45" data-i18n="experience_categories_description">Explora las categorías y encuentra tu próximo plato favorito.</p>
+                    </div>
+                    <div class="category-grid grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5">
+                        <p class="experience-data-status col-span-full" data-experience-categories-status role="status" data-i18n="experience_categories_loading">Cargando la carta...</p>
+                    </div>
+                    <p id="category-selection" class="sr-only" aria-live="polite"></p>
+                </div>
+            </section>
+
+            <section id="experience-products" class="experience-view hidden min-h-[calc(100svh-88px)] px-5 pb-16 pt-3 md:px-10" aria-labelledby="products-title" aria-hidden="true">
+                <div class="mx-auto max-w-7xl">
+                    <button type="button" class="back-button mb-8 inline-flex items-center gap-3 text-[10px] font-semibold uppercase tracking-[0.2em]" data-experience-back-categories>
+                        <span aria-hidden="true">←</span> <span data-i18n="experience_products_back">Categorías</span>
+                    </button>
+                    <div id="experience-admin-menu-controls" class="hidden mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-king-gold/20 bg-king-gold/5 p-4">
+                        <span class="text-[10px] font-bold uppercase tracking-[0.16em] text-king-gold" data-i18n="admin_active">Editor Administrativo Activo</span>
+                        <div class="flex flex-wrap gap-2">
+                            <button type="button" data-action="set-view" data-view="admin" class="rounded-lg border border-white/15 bg-black/60 px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-white hover:border-king-gold/50" data-i18n="admin_return">Volver a Panel</button>
+                            <button type="button" data-action="logout" class="rounded-lg border border-red-400/30 bg-red-950/30 px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-red-300 hover:bg-red-950/60" data-i18n="admin_logout">Salir de administración</button>
+                        </div>
+                    </div>
+                    <div class="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+                        <div>
+                            <p class="hud-label" data-i18n="experience_products_eyebrow">Selección de la casa</p>
+                            <h2 id="products-title" class="mt-2 font-display text-3xl tracking-[0.12em] md:text-5xl" data-i18n="experience_products_title">Platillos</h2>
+                        </div>
+                        <label class="experience-search">
+                            <span class="sr-only" data-i18n="experience_products_search">Buscar platillos</span>
+                            <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                            <input id="experience-product-search" type="search" data-i18n-placeholder="experience_products_search_placeholder" placeholder="Buscar en la carta..." autocomplete="off">
+                        </label>
+                    </div>
+                    <p id="experience-products-summary" class="mb-5 text-[10px] uppercase tracking-[0.18em] text-white/45" aria-live="polite"></p>
+                    <div id="experience-products-grid" class="experience-products-grid grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3"></div>
+                </div>
+            </section>
+
+            <section id="experience-orders" class="experience-view hidden min-h-[calc(100svh-88px)] px-5 pb-16 pt-6 md:px-10" aria-labelledby="orders-title" aria-hidden="true">
+                <div class="experience-surface-wrap mx-auto max-w-7xl">
+                    <button type="button" class="back-button mb-6 inline-flex items-center gap-3 text-[10px] font-semibold uppercase tracking-[0.2em]" data-experience-return>
+                        <span aria-hidden="true">←</span> Volver al menú
+                    </button>
+                    <p class="hud-label">Telemetría de comanda <span class="text-neon-pink">/</span> Tiempo real</p>
+                    <h2 id="orders-title" class="mb-6 mt-2 font-display text-3xl tracking-[0.12em] md:text-4xl">Estado de pedidos</h2>
+                    <div id="experience-orders-host"></div>
+                </div>
+            </section>
+
+            <section id="experience-admin" class="experience-view hidden min-h-[calc(100svh-88px)] px-5 pb-16 pt-6 md:px-10" aria-labelledby="command-title" aria-hidden="true">
+                <div class="experience-surface-wrap mx-auto max-w-7xl">
+                    <button type="button" class="back-button mb-6 inline-flex items-center gap-3 text-[10px] font-semibold uppercase tracking-[0.2em]" data-experience-return>
+                        <span aria-hidden="true">←</span> Volver al menú
+                    </button>
+                    <p class="hud-label">KingMenu <span class="text-neon-pink">/</span> Consola de gestión</p>
+                    <h2 id="command-title" class="mb-6 mt-2 font-display text-3xl tracking-[0.12em] md:text-4xl">Centro de comando</h2>
+                    <div id="experience-admin-host"></div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div id="experience-overlays" class="experience-overlays"></div>
+    <button id="experience-cart-bar" type="button" class="experience-cart-bar" data-experience-cart aria-label="Ver pedido" aria-hidden="true" inert>
+        <span id="experience-cart-bar-count" class="experience-cart-bar-count" aria-live="polite">0</span>
+        <span class="experience-cart-bar-label" data-i18n="experience_cart_title">Ver pedido</span>
+        <span id="experience-cart-bar-total" class="experience-cart-bar-total">$0</span>
+    </button>
+
+    <div id="app" hidden class="relative flex flex-col min-h-screen overflow-x-hidden pb-28 md:pb-8">
+
+        <!-- NAVBAR SUPERIOR -->
+        <nav
+            class="glass-nav fixed top-0 w-full z-50 h-16 md:h-20 flex items-center shadow-2xl transition-all duration-300">
+            <div class="container mx-auto px-4 lg:px-8 flex justify-between items-center">
+
+                <!-- Logo Principal -->
+                <div class="flex items-center gap-3 group">
+                    <div
+                        class="w-9 h-9 md:w-12 md:h-12 bg-king-gold rounded-lg flex items-center justify-center text-black font-display font-black text-xl md:text-2xl transform group-hover:rotate-6 transition-all duration-500 shadow-xl shadow-king-gold/15">
+                        K</div>
+                    <div>
+                        <h1 class="text-lg md:text-2xl font-display text-white tracking-widest leading-none font-bold">
+                            KING<span class="text-king-gold">MENU</span></h1>
+                        <p class="text-[8px] md:text-[9px] text-gray-400 uppercase tracking-[0.25em] ml-0.5 mt-0.5 hidden sm:block"
+                            data-i18n="nav_subtitle">Gastronomía Imperial • Cartagena de Indias</p>
+                    </div>
+                </div>
+
+                <!-- Controles de Navegación -->
+                <div class="flex items-center gap-2 md:gap-4">
+
+                    <!-- Help / Guide Button (Senior UX) -->
+                    <button data-action="open-help"
+                        class="flex items-center justify-center w-9 h-9 rounded-full bg-white/5 border border-white/10 text-gray-300 hover:text-king-gold hover:border-king-gold/50 transition-all shadow-lg active:scale-95"
+                        title="Guía de Asistencia / Help Guide">
+                        <i class="fa-solid fa-circle-question text-[13px]"></i>
+                    </button>
+
+                    <a href="/admin" aria-label="Acceso administrativo" title="Acceso administrativo"
+                        class="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-gray-300 shadow-lg transition hover:border-king-gold/50 hover:text-king-gold">
+                        <i class="fa-solid fa-lock text-[11px]"></i>
+                    </a>
+
+                    <!-- Language Toggle -->
+                    <button data-action="toggle-language"
+                        class="flex items-center justify-center w-9 h-9 rounded-full bg-white/5 border border-white/10 text-gray-300 hover:text-king-gold hover:border-king-gold/50 transition-all shadow-lg active:scale-95"
+                        title="Cambiar Idioma / Change Language">
+                        <i class="fa-solid fa-globe text-[11px] mr-1"></i>
+                        <span id="lang-indicator" data-language-indicator class="text-[9px] font-bold uppercase">ES</span>
+                    </button>
+
+                    <!-- Botón "Pedido" -->
+                    <button id="nav-order-status-btn" data-action="set-view" data-view="status"
+                        class="hidden items-center gap-2 px-4 md:px-5 h-9 md:h-11 rounded-full bg-king-gold hover:bg-king-goldHover text-black hover:scale-105 transition-all duration-300 shadow-lg shadow-king-gold/30 text-[10px] md:text-xs font-black uppercase tracking-wider active:scale-95 animate-pulse">
+                        <i class="fa-solid fa-receipt text-[10px]"></i>
+                        <span data-i18n="nav_order">Pedido</span>
+                    </button>
+
+                    <!-- Tu Selección (Carrito Desktop) -->
+                    <button id="nav-cart-btn-desktop" type="button" data-action="open-modal" data-modal="cart-modal"
+                        class="relative cursor-pointer group hidden md:flex items-center gap-3 px-5 py-2.5 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 hover:border-king-gold/30 transition-all">
+                        <span class="text-xs uppercase tracking-wider text-gray-300 group-hover:text-white font-bold"
+                            data-i18n="nav_cart">Su pedido</span>
+                        <span id="cart-badge-desktop"
+                            class="w-6 h-6 bg-king-gold rounded-full flex items-center justify-center text-black text-[10px] font-extrabold shadow-lg scale-0 transition-transform">
+                            0</span>
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- ===== HERO 3D CON OBJETO DE COMIDA ===== -->
+        <section id="hero-3d-section" class="relative">
+            <canvas id="three-canvas"></canvas>
+            <div class="hero-overlay"></div>
+
+            <div class="hero-content container mx-auto px-4 lg:px-8">
+                <div class="hero-content-inner max-w-4xl">
+                    <div class="hero-badge mb-4 md:mb-6 animate-fade-in" style="animation-delay: 0.1s;">
+                        <span class="dot"></span>
+                        <span
+                            class="text-[10px] md:text-[11px] font-display uppercase tracking-[0.3em] text-king-gold font-bold"
+                            data-i18n="hero_sub">Exclusividad y Arte Culinario</span>
+                    </div>
+
+                    <h1 data-i18n="hero_title"
+                        class="hero-title-main font-display font-black mb-3 md:mb-5 leading-none animate-slide-up text-gold-gradient"
+                        style="animation-delay: 0.2s;">
+                        Sabores <span class="italic font-serif"
+                            style="font-weight: 500; letter-spacing: 0.02em;">Sublimes</span>
+                    </h1>
+
+                    <p class="text-base md:text-xl text-gray-300 font-light font-serif leading-relaxed max-w-2xl mb-6 md:mb-8 animate-slide-up"
+                        style="animation-delay: 0.35s;">
+                        <span id="hero_title_span" class="reveal-text" data-i18n="hero_title_alt">Alta cocina imperial
+                            en el corazón amurallado de Cartagena de Indias.</span>
+                    </p>
+
+                    <div class="relative max-w-xl group animate-slide-up" style="animation-delay: 0.5s;">
+                        <div id="hero-search-wrap" class="rounded-full p-1.5 pr-2 transition-all duration-500">
+                            <div class="relative flex items-center">
+                                <i
+                                    class="fa-solid fa-magnifying-glass absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-king-gold transition-colors text-sm md:text-base"></i>
+                                <input type="text" id="search-input" data-i18n-placeholder="hero_search"
+                                    data-i18n-aria-label="experience_products_search"
+                                    placeholder="¿Qué platillo desea degustar hoy?"
+                                    class="w-full bg-transparent rounded-full py-3.5 md:py-4 pl-12 md:pl-14 pr-4 text-sm md:text-base text-white placeholder-gray-400 focus:outline-none transition-all">
+                                <button
+                                    data-action="scroll-products"
+                                    class="hidden sm:flex items-center gap-2 h-10 md:h-11 px-5 rounded-full bg-king-gold hover:bg-king-goldHover text-black font-bold text-[10px] md:text-xs uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-king-gold/20">
+                                    <i class="fa-solid fa-utensils text-[10px] md:text-xs"></i>
+                                    <span data-i18n="hero_btn_see_menu">Ver Carta</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Guía de Scroll Interactiva (Senior & Universal UX) -->
+            <div class="scroll-indicator" id="scroll-down-indicator" data-action="scroll-products" role="button" aria-label="Explorar Menú">
+                <div class="scroll-indicator-pill">
+                    <div class="mouse"></div>
+                    <span class="text-[9px] md:text-[10px] uppercase tracking-[0.2em] font-bold font-display text-king-gold" data-i18n="hero_scroll_hint">Desliza hacia abajo para ver la carta</span>
+                    <i class="fa-solid fa-chevron-down text-[10px] text-king-gold animate-bounce"></i>
+                </div>
+            </div>
+        </section>
+
+        <!-- CONTENIDO PRINCIPAL -->
+        <main class="menu-section-wrapper flex-grow container mx-auto px-4 lg:px-8 pt-10 md:pt-16">
+
+            <!-- VISTA 1: MENÚ DIGITAL -->
+            <div id="view-menu" class="animate-fade-in">
+                <!-- Botones de Control Admin -->
+                <div id="admin-back-controls"
+                    class="hidden mb-6 p-4 bg-king-gold/10 border border-king-gold/20 rounded-xl flex justify-between items-center animate-slide-up">
+                    <div class="flex items-center gap-3">
+                        <div class="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse"></div>
+                        <span
+                            class="text-king-gold font-bold uppercase tracking-widest text-[11px] md:text-xs font-display"
+                            data-i18n="admin_active">Editor Administrativo Activo</span>
+                    </div>
+                    <button data-action="set-view" data-view="admin"
+                        class="bg-black/80 hover:bg-black text-white px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 border border-white/10">
+                        <i class="fa-solid fa-arrow-left text-king-gold"></i> <span data-i18n="admin_return">Volver a
+                            Panel</span>
+                    </button>
+                </div>
+
+                <!-- INTRODUCCIÓN DE SECCIÓN MENÚ -->
+                <div class="section-intro mb-8 md:mb-14 text-center max-w-3xl mx-auto">
+                    <div class="gold-line-divider w-24 mx-auto mb-6"></div>
+                    <span
+                        class="text-[10px] md:text-[11px] font-display uppercase tracking-[0.35em] text-king-gold font-bold mb-3 block"
+                        data-i18n="menu_section_eyebrow">Carta Imperial</span>
+                    <h2 class="text-3xl md:text-5xl font-serif font-bold text-white mb-4 leading-tight"
+                        data-i18n="menu_section_title">
+                        Nuestra Selección <span class="text-gold-gradient italic">Señorial</span>
+                    </h2>
+                    <p class="text-sm md:text-base text-gray-400 font-light leading-relaxed font-serif"
+                        data-i18n="menu_section_desc">
+                        Una curaduría exquisita de sabores caribeños, técnica francesa y productos locales de la más
+                        alta pureza, servidos con devoción imperial.
+                    </p>
+                </div>
+
+                <!-- Categorías Estáticas -->
+                <div
+                    class="sticky top-16 md:top-20 z-40 py-5 bg-king-base/80 backdrop-blur-2xl -mx-4 px-4 mb-8 md:mb-12 border-y border-white/5">
+                    <div class="flex justify-between items-center mb-3 max-w-7xl mx-auto">
+                        <span
+                            class="text-[9px] uppercase tracking-[0.3em] text-gray-500 font-bold font-sans flex items-center gap-2">
+                            <i class="fa-solid fa-book-open text-king-gold"></i> <span
+                                data-i18n="menu_cat_label">Explorar por Categoría</span>
+                        </span>
+                        <div
+                            class="flex items-center gap-2 text-[9px] text-gray-500 font-bold uppercase tracking-wider">
+                            <i class="fa-solid fa-sort text-king-gold/70"></i> <span id="products-count-label"
+                                class="font-mono">0</span> <span data-i18n="menu_items_label">platillos</span>
+                        </div>
+                    </div>
+                    <div id="categories-container"
+                        class="flex gap-2.5 overflow-x-auto no-scrollbar pb-1 max-w-7xl mx-auto"></div>
+                </div>
+
+                <!-- Grid de Productos -->
+                <div id="products-grid"
+                    class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 max-w-7xl mx-auto">
+                </div>
+
+                <!-- Estado vacío del menú -->
+                <div id="empty-state" class="hidden py-16 text-center text-gray-400 max-w-md mx-auto">
+                    <div
+                        class="w-20 h-20 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mx-auto mb-4 text-king-gold shadow-lg shadow-king-gold/5">
+                        <i class="fa-solid fa-wand-magic-sparkles text-3xl animate-pulse"></i>
+                    </div>
+                    <p class="text-base font-serif text-white mb-2" id="empty-state-text" data-i18n="empty_syncing">
+                        Sincronizando la carta imperial...</p>
+                    <div id="empty-state-actions" class="mt-4 flex flex-col gap-2 items-center"></div>
+                </div>
+            </div>
+
+            <!-- VISTA 2: ESTADO DE LA ORDEN -->
+            <div id="view-status" class="hidden animate-slide-up max-w-4xl mx-auto py-6">
+                <div
+                    class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4 bg-white/5 border border-white/10 rounded-2xl p-4">
+                    <div class="text-center sm:text-left">
+                        <h3
+                            class="text-sm font-bold text-white font-serif flex items-center gap-2 justify-center sm:justify-start">
+                            <span class="w-2 h-2 rounded-full bg-king-gold animate-ping"></span>
+                            <span data-i18n="status_active">Su mesa se encuentra activa</span>
+                        </h3>
+                        <p class="text-[11px] text-gray-400" data-i18n="status_more">¿Desea ordenar algo más? Agregue
+                            nuevos antojitos y bebidas a su cuenta en cualquier momento.</p>
+                    </div>
+                    <button data-action="set-view" data-view="menu"
+                        class="btn-gold px-6 py-3.5 rounded-xl text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg w-full sm:w-auto h-11">
+                        <i class="fa-solid fa-utensils"></i> <span data-i18n="btn_keep_buying">Seguir Comprando</span>
+                    </button>
+                </div>
+
+                <div id="my-orders-dashboard" class="space-y-6 font-sans">
+                    <!-- Se inyectarán dinámicamente -->
+                </div>
+            </div>
+
+        </main>
+
+        <!-- CHAT ASISTENTE CON EL CHEF IMPERIAL -->
+        <div id="ai-chef-btn" class="fixed bottom-24 right-6 z-40">
+            <button data-action="toggle-chef" data-open="true" data-i18n-aria-label="experience_chef_title"
+                class="w-14 h-14 rounded-full btn-gold shadow-2xl flex items-center justify-center relative active:scale-95 transition-transform animate-sparkle">
+                <i class="fa-solid fa-wand-magic-sparkles text-lg"></i>
+                <span
+                    class="absolute -top-1 -right-1 bg-red-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full border border-black animate-bounce font-sans">CHEF</span>
+            </button>
+        </div>
+
+        <div id="ai-chef-drawer" class="fixed inset-0 z-[80] hidden" role="dialog" aria-modal="true"
+            aria-labelledby="chef-drawer-title" aria-hidden="true" tabindex="-1" inert>
+            <div class="absolute inset-0 bg-black/85 backdrop-blur-sm" data-action="toggle-chef" data-open="false"></div>
+            <div
+                class="absolute right-0 top-0 h-[100dvh] w-full md:w-[460px] bg-king-surface shadow-2xl flex flex-col border-l border-white/10 transition-transform duration-300">
+                <div class="p-5 border-b border-white/10 flex justify-between items-center bg-black/30">
+                    <div class="flex items-center gap-3">
+                        <div
+                            class="w-10 h-10 rounded-full bg-king-gold flex items-center justify-center text-black font-serif font-bold text-lg border border-king-goldLight">
+                            DI</div>
+                        <div>
+                            <h3 id="chef-drawer-title" class="text-white text-sm font-bold tracking-wider font-display">Asistente de carta</h3>
+                            <p class="text-[9px] text-king-gold uppercase tracking-wider font-semibold font-sans"
+                                data-i18n="chef_subtitle">Asistente de carta</p>
+                        </div>
+                    </div>
+                    <button data-action="toggle-chef" data-open="false" data-i18n-aria-label="modal_close"
+                        class="text-gray-400 hover:text-white p-2 transition"><i
+                            class="fa-solid fa-xmark text-lg"></i></button>
+                </div>
+                <div id="chef-messages" class="flex-grow overflow-y-auto p-5 space-y-4 custom-scroll bg-[#060606]">
+                    <div class="flex items-start gap-3 animate-fade-in">
+                        <div
+                            class="w-8 h-8 rounded-full bg-king-gold/15 border border-king-gold/30 flex items-center justify-center text-king-gold text-xs flex-shrink-0">
+                            DI</div>
+                        <div class="bg-[#101010] border border-white/5 p-3.5 rounded-2xl rounded-tl-none max-w-[85%]">
+                            <p class="text-xs text-gray-200 leading-relaxed font-sans font-light"
+                                data-i18n="chef_welcome">
+                                Le doy la bienvenida a KingMenu. Puedo ayudarle a consultar los platillos, sus ingredientes
+                                y precios. Si tiene una alergia, confirme siempre los alérgenos y posibles contactos
+                                cruzados con nuestro personal.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="px-4 py-2.5 flex gap-2 overflow-x-auto no-scrollbar bg-black/20 border-t border-white/5">
+                    <button data-action="chef-preset" data-translation-key="chef_q1_val"
+                        class="px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10 text-[10px] text-gray-300 hover:border-king-gold hover:text-white whitespace-nowrap transition-all font-sans"
+                        data-i18n="chef_q1">Maridaje de Vinos</button>
+                    <button data-action="chef-preset" data-translation-key="chef_q2_val"
+                        class="px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10 text-[10px] text-gray-300 hover:border-king-gold hover:text-white whitespace-nowrap transition-all font-sans"
+                        data-i18n="chef_q2">Entrada de Gala</button>
+                    <button data-action="chef-preset" data-translation-key="chef_q3_val"
+                        class="px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10 text-[10px] text-gray-300 hover:border-king-gold hover:text-white whitespace-nowrap transition-all font-sans"
+                        data-i18n="chef_q3">Postre Alternativo</button>
+                </div>
+                <div class="p-4 border-t border-white/10 bg-black/40 flex gap-2">
+                    <input type="text" id="chef-input" data-i18n-placeholder="chef_input"
+                        data-i18n-aria-label="chef_input_label"
+                        placeholder="Pregúntele al chef..." class="flex-grow input-luxury px-4 py-3 rounded-xl text-xs"
+                        data-action="chef-enter">
+                    <button data-action="send-chef-message" data-i18n-aria-label="chef_send"
+                        class="btn-gold w-11 h-11 rounded-xl flex items-center justify-center"><i
+                            class="fa-solid fa-paper-plane text-xs"></i></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- DETALLE MODAL -->
+        <div id="detail-modal"
+            class="fixed inset-0 z-[60] flex items-end md:items-center justify-center p-0 md:p-4 hidden"
+            role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-hidden="true" tabindex="-1" inert>
+            <div class="absolute inset-0 bg-black/95 backdrop-blur-md" data-action="close-modal" data-modal="detail-modal"></div>
+            <div
+                class="relative w-full md:w-[950px] bg-king-surface md:rounded-3xl mobile-bottom-sheet shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[92vh] md:max-h-[85vh] animate-slide-up border-0 md:border border-white/10">
+
+                <div class="md:w-1/2 h-64 md:h-auto md:min-h-[480px] relative bg-black flex-shrink-0 overflow-hidden">
+                    <div id="media-2d" class="absolute inset-0 w-full h-full z-20 transition-all duration-500">
+                        <div class="relative w-full h-full overflow-hidden">
+                            <div id="carousel-slides"
+                                class="flex w-full h-full transition-transform duration-500 ease-out"></div>
+                            <button data-action="carousel-previous" data-i18n-aria-label="carousel_previous"
+                                class="absolute left-3 top-1/2 -translate-y-1/2 z-30 w-11 h-11 rounded-full bg-black/60 hover:bg-black text-white flex items-center justify-center border border-white/10 transition backdrop-blur-sm active:scale-90 animate-fade-in"><i
+                                    class="fa-solid fa-chevron-left text-xs"></i></button>
+                            <button data-action="carousel-next" data-i18n-aria-label="carousel_next"
+                                class="absolute right-3 top-1/2 -translate-y-1/2 z-30 w-11 h-11 rounded-full bg-black/60 hover:bg-black text-white flex items-center justify-center border border-white/10 transition backdrop-blur-sm active:scale-90 animate-fade-in"><i
+                                    class="fa-solid fa-chevron-right text-xs"></i></button>
+                            <div id="carousel-indicators"
+                                class="absolute bottom-20 left-1/2 -translate-x-1/2 z-30 flex gap-1.5 justify-center items-center">
+                            </div>
+                        </div>
+                        <div
+                            class="absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-black via-black/40 to-transparent pointer-events-none z-20">
+                        </div>
+
+                        <div id="btn-container-3d-controls"
+                            class="absolute bottom-6 left-0 w-full flex justify-center gap-3 z-30 pointer-events-auto"
+                            style="display: none;">
+                            <button data-action="activate-3d"
+                                class="bg-black/90 backdrop-blur-md text-white border border-white/15 px-5 py-3 rounded-full font-bold shadow-xl hover:scale-105 transition flex items-center gap-2 text-xs font-sans">
+                                <i class="fa-solid fa-cube text-king-gold"></i> <span data-i18n="btn_3d">Vista 3D
+                                    Interactiva</span>
+                            </button>
+                            <button data-action="launch-ar"
+                                class="bg-king-gold text-black border border-king-goldLight px-5 py-3 rounded-full font-bold shadow-[0_0_25px_rgba(212,175,55,0.4)] hover:scale-105 transition flex items-center gap-2 text-xs font-sans">
+                                <i class="fa-solid fa-camera"></i> <span data-i18n="btn_ar">Proyectar (AR)</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="media-3d"
+                        class="absolute inset-0 w-full h-full z-10 opacity-0 pointer-events-none transition-opacity duration-300 bg-[#050505]">
+                        <model-viewer id="modal-3d-viewer" src="" ar ar-modes="webxr scene-viewer quick-look fallback"
+                            ar-placement="floor" ar-scale="auto" camera-controls touch-action="pan-y" auto-rotate
+                            shadow-intensity="1" class="w-full h-full outline-none"></model-viewer>
+                        <button data-action="activate-3d"
+                            class="absolute top-4 left-4 bg-black/90 border border-white/10 text-white py-2 px-4 rounded-full backdrop-blur-sm flex items-center justify-center z-40 hover:bg-black text-xs gap-2 transition pointer-events-auto shadow-lg font-sans">
+                            <i class="fa-solid fa-arrow-left"></i> <span data-i18n="btn_back_img">Volver a Imagen</span>
+                        </button>
+                    </div>
+                    <button data-action="close-modal" data-modal="detail-modal" data-i18n-aria-label="modal_close"
+                        class="absolute top-4 right-4 w-9 h-9 bg-black/80 text-white rounded-full backdrop-blur-sm flex items-center justify-center md:hidden z-50 shadow-lg"><i
+                            class="fa-solid fa-xmark"></i></button>
+                </div>
+
+                <div
+                    class="md:w-1/2 flex flex-col flex-grow bg-king-surface -mt-5 md:mt-0 rounded-t-3xl md:rounded-none z-10 max-h-[60vh] md:max-h-[88vh] font-sans relative overflow-hidden">
+                    
+                    <!-- Contenido desplazable del detalle -->
+                    <div class="p-5 md:p-8 flex-grow overflow-y-auto custom-scroll space-y-6">
+                        <div class="hidden md:flex justify-between items-start">
+                            <span id="modal-cat"
+                                class="text-[10px] uppercase tracking-widest text-king-gold border border-king-gold/30 px-2 py-1 rounded bg-king-gold/5 font-display"></span>
+                            <button data-action="close-modal" data-modal="detail-modal" data-i18n-aria-label="modal_close"
+                                class="text-gray-500 hover:text-white transition"><i
+                                    class="fa-solid fa-xmark text-2xl"></i></button>
+                        </div>
+
+                        <div>
+                            <h2 id="modal-title" class="text-xl md:text-3xl font-serif text-white mb-1.5 leading-tight"
+                                data-i18n="experience_product_fallback">
+                                Platillo
+                            </h2>
+                            <div class="flex items-center gap-2">
+                                <p id="modal-price" class="text-lg md:text-xl text-king-gold font-bold font-mono">$0</p>
+                                <span class="text-gray-700">|</span>
+                                <div class="flex items-center text-xs text-king-gold gap-1 font-bold">
+                                    <span id="modal-rating-stars" class="inline-flex gap-0.5" aria-label="Sin calificaciones"></span>
+                                    <span id="modal-rating-avg">--</span>
+                                    <span id="modal-rating-count" class="text-gray-500 font-normal">(0)</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div>
+                                <h4 class="text-[10px] font-bold text-gray-500 uppercase mb-1 tracking-wider font-sans"
+                                    data-i18n="detail_desc_title">Descripción del Autor</h4>
+                                <p id="modal-desc" class="text-gray-300 text-xs md:text-sm leading-relaxed font-light">
+                                </p>
+                            </div>
+                            <div id="modal-ingredients-container" class="hidden">
+                                <h4 class="text-[10px] font-bold text-gray-500 uppercase mb-1.5 tracking-wider font-sans"
+                                    data-i18n="detail_ing_title">Ingredientes</h4>
+                                <div id="modal-ingredients" class="flex flex-wrap gap-1.5"></div>
+                            </div>
+                            <div id="modal-allergens-container" class="hidden rounded-xl border border-amber-400/20 bg-amber-400/5 p-3">
+                                <h4 class="mb-1 text-[10px] font-bold uppercase tracking-wider text-amber-200">Alérgenos declarados</h4>
+                                <p id="modal-allergens" class="text-xs leading-relaxed text-amber-100/80"></p>
+                            </div>
+                            <div class="space-y-1.5">
+                                <label for="detail-item-notes" class="block text-[10px] font-bold uppercase tracking-wider text-gray-400">Personalización, alergias o notas</label>
+                                <textarea id="detail-item-notes" rows="2" maxlength="500" placeholder="Ej.: sin cebolla, alergia al maní..."
+                                    class="w-full rounded-xl border border-cyan-100/15 bg-black/35 px-3 py-2.5 text-xs text-white placeholder:text-gray-500 focus:border-cyan-300/50 focus:outline-none"></textarea>
+                            </div>
+
+                            <div id="meat-prep-options"
+                                class="hidden bg-white/5 p-3.5 rounded-xl border border-white/5">
+                                <h4 class="text-[10px] font-bold text-gray-400 uppercase mb-2 tracking-wider font-sans"
+                                    data-i18n="detail_cook_title">Término de Cocción</h4>
+                                <div class="grid grid-cols-3 gap-2 text-[10px]">
+                                    <label class="flex items-center gap-1.5 cursor-pointer text-gray-300"><input
+                                            type="radio" name="cook-point" value="Término Medio" checked
+                                            class="accent-king-gold"> <span data-i18n="cook_med">Término
+                                            Medio</span></label>
+                                    <label class="flex items-center gap-1.5 cursor-pointer text-gray-300"><input
+                                            type="radio" name="cook-point" value="Tres Cuartos"
+                                            class="accent-king-gold"> <span data-i18n="cook_34">Tres
+                                            Cuartos</span></label>
+                                    <label class="flex items-center gap-1.5 cursor-pointer text-gray-300"><input
+                                            type="radio" name="cook-point" value="Bien Asado" class="accent-king-gold">
+                                        <span data-i18n="cook_well">Bien Cocido</span></label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="border-t border-white/5 pt-4">
+                            <h4
+                                class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 flex justify-between items-center font-sans">
+                                <span data-i18n="detail_rev_title">Opiniones de Comensales</span>
+                                <span id="modal-reviews-count" class="text-xs text-gray-500 font-mono">0</span>
+                            </h4>
+                            <div id="modal-reviews-list"
+                                class="space-y-2 max-h-28 overflow-y-auto custom-scroll mb-4 pr-1 text-xs text-gray-400 font-sans">
+                            </div>
+
+                            <div class="bg-white/5 p-3 rounded-xl border border-white/5">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-[9px] uppercase text-gray-400 font-bold"
+                                        data-i18n="detail_rate_ask">¿Desea calificar el plato?</span>
+                                    <div id="star-selector" class="flex gap-1 text-gray-600" role="group"
+                                        data-i18n-aria-label="rating_select_aria">
+                                        <button data-action="set-rating" data-rating="1" aria-pressed="false" aria-label="Calificar con 1 estrella"
+                                            class="star-btn transition hover:text-king-gold" data-val="1"><i
+                                                class="fa-solid fa-star text-xs"></i></button>
+                                        <button data-action="set-rating" data-rating="2" aria-pressed="false" aria-label="Calificar con 2 estrellas"
+                                            class="star-btn transition hover:text-king-gold" data-val="2"><i
+                                                class="fa-solid fa-star text-xs"></i></button>
+                                        <button data-action="set-rating" data-rating="3" aria-pressed="false" aria-label="Calificar con 3 estrellas"
+                                            class="star-btn transition hover:text-king-gold" data-val="3"><i
+                                                class="fa-solid fa-star text-xs"></i></button>
+                                        <button data-action="set-rating" data-rating="4" aria-pressed="false" aria-label="Calificar con 4 estrellas"
+                                            class="star-btn transition hover:text-king-gold" data-val="4"><i
+                                                class="fa-solid fa-star text-xs"></i></button>
+                                        <button data-action="set-rating" data-rating="5" aria-pressed="false" aria-label="Calificar con 5 estrellas"
+                                            class="star-btn transition hover:text-king-gold" data-val="5"><i
+                                                class="fa-solid fa-star text-xs"></i></button>
+                                    </div>
+                                </div>
+                                <div class="flex gap-2">
+                                    <input type="text" id="review-comment-input" data-i18n-placeholder="detail_rev_ph"
+                                        data-i18n-aria-label="review_comment_label"
+                                        placeholder="Escriba su comentario..."
+                                        class="flex-grow bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white">
+                                    <button data-action="submit-review" data-i18n-aria-label="review_submit"
+                                        class="btn-gold px-4 rounded-lg text-xs h-11 w-11 flex items-center justify-center"><i
+                                            class="fa-solid fa-paper-plane"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Botonera Fija / Sticky de Compra (Siempre visible de un vistazo) -->
+                    <div class="p-4 md:p-6 bg-black/90 backdrop-blur-xl border-t border-white/10 mt-auto sticky bottom-0 z-20 flex items-center gap-3 font-sans shadow-2xl flex-shrink-0">
+                        <div class="flex items-center bg-white/5 rounded-xl border border-white/10 h-12 p-1">
+                            <button data-action="update-modal-qty" data-delta="-1" data-i18n-aria-label="cart_decrease_quantity"
+                                class="w-11 h-full text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition font-bold text-sm">-</button>
+                            <input type="number" id="modal-qty" value="1" min="1" readonly
+                                data-i18n-aria-label="dish_quantity_label"
+                                class="w-8 bg-transparent text-center text-white font-bold h-full font-mono text-xs">
+                            <button data-action="update-modal-qty" data-delta="1" data-i18n-aria-label="cart_increase_quantity"
+                                class="w-11 h-full text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition font-bold text-sm">+</button>
+                        </div>
+                        <button id="btn-add-cart" data-action="add-current-detail"
+                            class="flex-grow btn-gold h-12 rounded-xl shadow-lg text-xs uppercase tracking-widest font-bold active:scale-95 transition-transform font-sans flex items-center justify-center gap-2"
+                            data-i18n="btn_add_sel">
+                            <i class="fa-solid fa-plus text-xs"></i>
+                            <span>Agregar a su Selección</span>
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- CART MODAL -->
+        <div id="cart-modal" class="fixed inset-0 z-[60] hidden" role="dialog" aria-modal="true"
+            aria-labelledby="cart-modal-title" aria-hidden="true" tabindex="-1" inert>
+            <div class="absolute inset-0 bg-black/85 backdrop-blur-sm transition-opacity"
+                data-action="close-modal" data-modal="cart-modal"></div>
+            <div
+                class="cart-bottom-sheet absolute bottom-0 left-0 h-[92dvh] max-h-[900px] w-full bg-king-surface shadow-2xl flex flex-col border border-king-gold/15">
+
+                <div class="p-5 border-b border-white/10 flex justify-between items-center bg-black/35">
+                    <div>
+                        <h2 id="cart-modal-title" class="text-lg font-serif text-white flex items-center gap-3"><i
+                                class="fa-solid fa-bag-shopping text-king-gold"></i> <span data-i18n="cart_sheet_title">Tu pedido</span></h2>
+                        <p id="cart-modal-step-label" class="mt-1 pl-8 text-[10px] uppercase tracking-[0.14em] text-white/45" aria-live="polite">Paso 1 · Revisa tu pedido</p>
+                    </div>
+                    <button data-action="close-modal" data-modal="cart-modal" data-i18n-aria-label="modal_close"
+                        class="text-gray-500 hover:text-white p-2 transition"><i
+                            class="fa-solid fa-xmark text-xl"></i></button>
+                </div>
+
+                <div class="cart-step-indicator" aria-hidden="true">
+                    <span id="cart-step-one" class="is-current"></span>
+                    <span id="cart-step-two"></span>
+                </div>
+
+                <!-- SECCIÓN 1: LISTA -->
+                <div id="cart-view-items" class="flex flex-col flex-1 min-h-0 relative">
+                    <div id="cart-items-list" class="flex-grow overflow-y-auto p-4 space-y-3 custom-scroll"></div>
+
+                    <div id="cart-items-footer" class="p-5 bg-black/50 border-t border-white/10 font-sans">
+                        <div class="flex justify-between items-center text-white text-base font-bold mb-4">
+                            <span data-i18n="cart_subtotal">Subtotal</span>
+                            <span id="cart-subtotal" class="text-king-gold font-mono">$0</span>
+                        </div>
+                        <button id="btn-continue-checkout" data-action="show-checkout"
+                            class="w-full btn-gold py-3.5 rounded-xl shadow-lg font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-3 active:scale-95 transition-transform h-12"><span
+                                data-i18n="btn_checkout">Continuar</span> <i
+                                class="fa-solid fa-arrow-right"></i></button>
+                    </div>
+
+                    <div id="cart-empty"
+                        class="hidden absolute inset-0 bg-king-surface z-10 flex flex-col items-center justify-center text-gray-500 space-y-4">
+                        <div class="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-1"><i
+                                class="fa-solid fa-basket-shopping text-3xl opacity-35"></i></div>
+                        <p class="text-xs" data-i18n="cart_empty">Su pedido está vacío.</p>
+                        <button data-action="close-modal" data-modal="cart-modal"
+                            class="text-king-gold hover:text-white font-bold text-xs uppercase border-b border-king-gold pb-0.5 font-sans"
+                            data-i18n="cart_explore">Explorar menú de gala</button>
+                    </div>
+                </div>
+                
+                <!-- SECCIÓN 2: SPLIT - Rediseño Táctil Premium -->
+                <div id="cart-view-split"
+                    class="hidden flex-1 flex-col min-h-0 overflow-y-auto custom-scroll font-sans">
+
+                    <!-- ══ OPCIÓN 1: PARTES IGUALES ══════════════════════════════ -->
+                    <div class="p-4 border-b border-white/5">
+                        <div class="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
+                            <!-- Header de tarjeta -->
+                            <div class="flex items-center gap-3 p-4 border-b border-white/5 bg-king-gold/5">
+                                <div
+                                    class="w-10 h-10 rounded-full bg-king-gold/15 border border-king-gold/30 flex items-center justify-center flex-shrink-0">
+                                    <i class="fa-solid fa-users text-king-gold text-base"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-bold text-white font-display tracking-wide">Partes Iguales
+                                    </h4>
+                                    <p class="text-[10px] text-gray-400">Divide el total entre todos por igual</p>
+                                </div>
+                            </div>
+
+                            <!-- Stepper de personas -->
+                            <div class="p-5">
+                                <p
+                                    class="text-[10px] text-gray-400 uppercase tracking-widest mb-4 font-bold text-center">
+                                    ¿Cuántas personas pagan?</p>
+                                <div class="flex items-center justify-center gap-5 mb-5">
+                                    <button id="btn-split-minus" data-action="adjust-split-people" data-delta="-1"
+                                        class="w-14 h-14 rounded-full bg-white/10 border border-white/15 text-white text-2xl font-bold flex items-center justify-center active:scale-90 transition-all hover:bg-white/20 hover:border-king-gold/50 select-none">
+                                        −
+                                    </button>
+                                    <div class="text-center min-w-[64px]">
+                                        <span id="split-people-count"
+                                            class="text-5xl font-black text-king-gold font-mono leading-none">2</span>
+                                        <p class="text-[9px] text-gray-500 uppercase tracking-wider mt-1">personas</p>
+                                    </div>
+                                    <button id="btn-split-plus" data-action="adjust-split-people" data-delta="1"
+                                        class="w-14 h-14 rounded-full bg-white/10 border border-white/15 text-white text-2xl font-bold flex items-center justify-center active:scale-90 transition-all hover:bg-white/20 hover:border-king-gold/50 select-none">
+                                        +
+                                    </button>
+                                </div>
+
+                                <!-- Resultado en tiempo real -->
+                                <div class="bg-black/40 border border-king-gold/20 rounded-xl p-4 text-center">
+                                    <p class="text-[10px] text-gray-400 uppercase tracking-widest mb-1">Cada persona
+                                        paga</p>
+                                    <p id="split-equal-result" class="text-3xl font-black text-king-gold font-mono">$0
+                                    </p>
+                                    <p class="text-[9px] text-gray-500 mt-1 font-light">del total de la cuenta</p>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- ══ OPCIÓN 2: CALCULADORA INDIVIDUAL ═══════════════════════ -->
+                    <div class="p-4">
+                        <div class="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
+                            <!-- Header de tarjeta -->
+                            <div class="flex items-center gap-3 p-4 border-b border-white/5 bg-emerald-500/5">
+                                <div
+                                    class="w-10 h-10 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center flex-shrink-0">
+                                    <i class="fa-solid fa-hand-holding-dollar text-emerald-400 text-base"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-bold text-white font-display tracking-wide">Mi Consumo</h4>
+                                    <p class="text-[10px] text-gray-400">Selecciona solo lo que tú pediste</p>
+                                </div>
+                            </div>
+
+                            <!-- Lista de items del carrito -->
+                            <div class="p-4 space-y-2" id="split-individual-list">
+                                <!-- Renderizado dinámicamente por renderSplitBill() -->
+                                <p class="text-center text-[10px] text-gray-500 py-4">Agrega platillos a tu selección
+                                    para comenzar.</p>
+                            </div>
+
+                            <!-- Resultado individual fijo en la base -->
+                            <div class="p-4 border-t border-white/5 bg-black/30">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <p class="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Tu
+                                            parte de la cuenta</p>
+                                        <p class="text-[9px] text-gray-600 mt-0.5">Solo los platillos seleccionados</p>
+                                    </div>
+                                    <p id="split-individual-result"
+                                        class="text-2xl font-black text-emerald-400 font-mono">$0</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Spacer inferior -->
+                    <div class="h-4"></div>
+                </div>
+
+                <!-- SECCIÓN 3: CHECKOUT -->
+                <div id="cart-view-checkout"
+                    class="flex flex-col flex-1 min-h-0 hidden animate-slide-in-right bg-king-surface font-sans">
+                    <div class="flex-grow overflow-y-auto p-5 space-y-6 custom-scroll">
+                        <div class="bg-white/5 rounded-xl p-4 border border-white/5 font-sans">
+                            <h4 class="text-[10px] text-gray-400 uppercase font-bold mb-3 flex items-center gap-2"><i
+                                    class="fa-solid fa-list-check"></i> <span data-i18n="check_summary">Resumen del
+                                    Pedido</span></h4>
+                            <div id="checkout-summary-list"
+                                class="space-y-2 text-xs text-gray-300 mb-4 max-h-36 overflow-y-auto pr-2 custom-scroll">
+                            </div>
+                            <div
+                                class="border-t border-white/10 pt-3 flex justify-between font-bold text-white text-base">
+                                <span data-i18n="check_total">Total del Servicio</span>
+                                <span id="checkout-total" class="text-king-gold font-mono">$0</span>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4">
+                            <h4 class="text-base text-white font-serif font-bold mb-2" data-i18n="cart_confirm_table_order">Confirmar pedido para su Mesa</h4>
+                            <p data-table-access-status class="text-[10px] text-gray-500" aria-live="polite"></p>
+                            <div>
+                                <label for="order-name" class="block text-[10px] text-gray-500 mb-1 uppercase tracking-wide font-sans"
+                                    data-i18n="check_name">Nombre o apodo</label>
+                                <input type="text" id="order-name" data-i18n-placeholder="check_name_ph"
+                                    placeholder="Ej.: Ana"
+                                    class="w-full input-luxury px-4 py-2.5 rounded-xl text-xs font-sans h-11">
+                            </div>
+                            <div>
+                                <label for="order-notes" class="block text-[10px] text-gray-500 mb-1 uppercase tracking-wide font-sans">
+                                    <span data-i18n="chef_notes_label">Notas para el chef (opcional)</span>
+                                </label>
+                                <textarea id="order-notes" rows="3" data-i18n-placeholder="check_notes_ph"
+                                    placeholder="Preferencias, alergias o indicaciones de preparación..."
+                                    class="w-full input-luxury px-4 py-2.5 rounded-xl text-xs font-sans"></textarea>
+                            </div>
+
+                            <!-- Enlace de Asistencia Rápida -->
+                            <div class="text-center pt-2">
+                                <button type="button" data-action="open-help" class="text-[10px] text-king-gold/90 hover:text-white underline font-sans transition flex items-center justify-center gap-1.5 mx-auto py-1">
+                                    <i class="fa-solid fa-circle-question text-[11px] text-king-gold"></i>
+                                    <span data-i18n="check_need_help">¿Tiene dudas sobre cómo ordenar? Ver Guía Rápida</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-5 bg-black/50 border-t border-white/10 flex gap-3 font-sans">
+                        <button data-action="hide-checkout" data-i18n-aria-label="checkout_back"
+                            class="px-4 py-3.5 rounded-xl border border-white/10 text-gray-400 hover:text-white hover:bg-white/5 transition h-12 w-12 flex items-center justify-center"><i
+                                class="fa-solid fa-arrow-left"></i></button>
+                        <button data-action="submit-order"
+                            class="flex-grow btn-gold py-3.5 rounded-xl shadow-lg font-bold text-xs uppercase tracking-widest active:scale-95 transition-transform h-12"
+                            data-i18n="btn_send_order">Enviar Pedido a Cocina</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- WAITER MODAL -->
+        <div id="waiter-modal" class="fixed inset-0 z-[70] flex items-center justify-center p-4 hidden"
+            role="dialog" aria-modal="true" aria-labelledby="waiter-modal-title" aria-hidden="true" tabindex="-1" inert>
+            <div class="absolute inset-0 bg-black/90 backdrop-blur-sm" data-action="close-modal" data-modal="waiter-modal"></div>
+            <div
+                class="relative bg-king-surface border border-white/10 p-6 rounded-2xl w-full max-w-sm shadow-2xl text-center">
+                <div
+                    class="w-14 h-14 bg-king-gold/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-king-gold/25 shadow-[0_0_20px_rgba(212,175,55,0.15)]">
+                    <i class="fa-solid fa-bell text-xl text-king-gold animate-pulse"></i>
+                </div>
+                <h3 id="waiter-modal-title" class="text-lg font-serif text-white mb-2 font-display" data-i18n="waiter_title">Solicitar
+                    Asistencia</h3>
+                <p class="text-gray-400 text-xs mb-4 font-sans" data-i18n="waiter_desc">La mesa se identifica automáticamente con el código QR asignado.</p>
+                <label for="waiter-table-input" class="sr-only" data-i18n="waiter_table_label">Número de mesa para solicitar asistencia</label>
+                <input type="number" id="waiter-table-input" placeholder="Mesa #"
+                    class="w-full input-luxury px-4 py-3 rounded-xl text-center text-white font-bold text-lg mb-4 focus:border-king-gold font-mono">
+                <p data-table-access-status class="mb-4 text-[10px] text-gray-500" aria-live="polite"></p>
+                <button data-action="send-waiter-call"
+                    class="w-full btn-gold py-3 rounded-xl font-bold text-xs uppercase tracking-wide font-sans h-12"
+                    data-i18n="waiter_btn">Solicitar Ahora</button>
+            </div>
+        </div>
+
+        <!-- CATEGORIES MODAL -->
+        <div id="categories-modal" class="fixed inset-0 z-[70] flex items-center justify-center p-4 hidden"
+            role="dialog" aria-modal="true" aria-labelledby="categories-modal-title" aria-hidden="true" tabindex="-1" inert>
+            <div class="absolute inset-0 bg-black/90 backdrop-blur-sm" data-action="close-modal" data-modal="categories-modal"></div>
+            <div
+                class="relative bg-king-surface border border-white/10 w-full max-w-md rounded-2xl shadow-2xl flex flex-col max-h-[80vh]">
+                <div class="p-4 border-b border-white/10 flex justify-between items-center bg-white/5 font-sans">
+                    <h3 id="categories-modal-title" class="text-sm font-bold text-white font-serif" data-i18n="cat_title">Gestor de Categorías</h3>
+                    <button data-action="close-modal" data-modal="categories-modal" data-i18n-aria-label="modal_close"
+                        class="text-gray-400 hover:text-white"><i
+                            class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="p-4 flex-grow overflow-y-auto custom-scroll space-y-4 font-sans">
+                    <div class="flex gap-2 items-center">
+                        <div class="relative flex-grow space-y-2 font-sans">
+                            <input type="text" id="new-cat-name" data-i18n-placeholder="cat_ph"
+                                data-i18n-aria-label="category_name_es"
+                                placeholder="Nombre de categoría (ES)"
+                                class="w-full input-luxury px-3 py-2 rounded-lg text-xs h-11">
+                            <input type="text" id="new-cat-name-en" data-i18n-aria-label="category_name_en"
+                                placeholder="Category name (EN, optional)"
+                                class="w-full input-luxury px-3 py-2 rounded-lg text-xs h-11">
+                            <button id="cancel-cat-edit" data-action="cancel-category-edit" data-i18n-aria-label="modal_cancel"
+                                class="hidden absolute right-2 top-5 text-gray-500 hover:text-white text-xs"><i
+                                    class="fa-solid fa-xmark"></i></button>
+                        </div>
+                        <button id="btn-save-cat" data-action="save-category" data-i18n-aria-label="category_save"
+                            class="btn-gold px-4 py-2 rounded-lg text-xs font-bold h-11"><i
+                                class="fa-solid fa-plus"></i></button>
+                    </div>
+                    <div class="space-y-2 rounded-xl border border-white/10 bg-black/20 p-3">
+                        <div class="flex items-center justify-between gap-2">
+                            <label id="category-editor-heading" for="category-image-url" class="text-[9px] font-bold uppercase tracking-wider text-gray-400">Imágenes de categoría</label>
+                            <button type="button" data-action="trigger-category-upload"
+                                class="text-[10px] font-bold text-king-gold hover:text-white">
+                                <i class="fa-solid fa-file-image"></i> Adjuntar
+                            </button>
+                        </div>
+                        <div class="flex gap-2">
+                            <input type="url" id="category-image-url" inputmode="url" data-i18n-aria-label="image_url_label"
+                                placeholder="Pegar URL de imagen (https://...)"
+                                class="input-luxury min-w-0 flex-1 rounded-lg px-3 py-2 text-xs">
+                            <button type="button" data-action="add-category-image"
+                                class="rounded-lg border border-king-gold/30 px-3 text-king-gold hover:bg-king-gold/10"
+                                aria-label="Agregar imagen de categoría"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+                        <p class="text-[9px] text-gray-500">Al editar una categoría, elige la portada de sus platillos o adjunta una imagen propia.</p>
+                        <div id="category-images-container" class="admin-image-gallery"></div>
+                        <div id="category-product-image-options" class="category-product-image-options" hidden>
+                            <p class="text-[9px] font-bold uppercase tracking-wider text-gray-400">Fotos de platillos de esta categoría</p>
+                            <div id="category-product-image-list" class="category-product-image-list"></div>
+                        </div>
+                    </div>
+                    <div id="categories-manage-list" class="space-y-2"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PRODUCT MODAL -->
+        <div id="product-modal" class="fixed inset-0 z-[70] flex items-center justify-center p-4 hidden"
+            role="dialog" aria-modal="true" aria-labelledby="product-modal-title" aria-hidden="true" tabindex="-1" inert>
+            <div class="absolute inset-0 bg-black/90 backdrop-blur-sm" data-action="close-modal" data-modal="product-modal"></div>
+            <div
+                class="relative bg-king-surface border border-white/10 w-full max-w-lg rounded-2xl shadow-2xl flex flex-col max-h-[90vh]">
+                <div class="p-4 border-b border-white/10 flex justify-between items-center bg-white/5 font-sans">
+                    <h3 id="product-modal-title" class="text-sm font-bold text-white font-serif" data-i18n="prod_title">Ficha de Producto</h3>
+                    <button data-action="close-modal" data-modal="product-modal" data-i18n-aria-label="modal_close"
+                        class="text-gray-400 hover:text-white"><i
+                            class="fa-solid fa-xmark text-lg"></i></button>
+                </div>
+                <div class="p-4 overflow-y-auto space-y-4 custom-scroll text-xs font-sans">
+                    <input type="hidden" id="prod-id">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div><label for="prod-name" class="text-[9px] text-gray-500 uppercase font-bold mb-1 block">Nombre
+                                (ES)</label><input type="text" id="prod-name"
+                                class="input-luxury px-3 py-2.5 rounded-lg w-full h-11"></div>
+                        <div><label for="prod-name-en" class="text-[9px] text-gray-500 uppercase font-bold mb-1 block">Name
+                                (EN)</label><input type="text" id="prod-name-en"
+                                class="input-luxury px-3 py-2.5 rounded-lg w-full h-11"></div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div><label for="prod-price" class="text-[9px] text-gray-500 uppercase font-bold mb-1 block">Precio
+                                (COP)</label><input type="number" id="prod-price"
+                                class="input-luxury px-3 py-2.5 rounded-lg w-full font-mono h-11"></div>
+                        <div>
+                            <label for="prod-cat" class="text-[9px] text-gray-500 uppercase font-bold mb-1 block">Categoría
+                                (ES)</label>
+                            <select id="prod-cat" class="input-luxury px-3 py-2.5 rounded-lg w-full h-11"
+                                aria-label="Seleccionar categoría del platillo"></select>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label for="prod-discount-type" class="mb-1 block text-[9px] font-bold uppercase text-gray-500">Descuento</label>
+                            <select id="prod-discount-type" class="input-luxury h-11 w-full rounded-lg px-3 py-2.5">
+                                <option value="none">Sin descuento</option>
+                                <option value="percent">Porcentaje (%)</option>
+                                <option value="price">Precio final (COP)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="prod-discount-value" class="mb-1 block text-[9px] font-bold uppercase text-gray-500">Porcentaje / precio rebajado</label>
+                            <input type="number" id="prod-discount-value" min="0" step="1" value="0" disabled
+                                class="input-luxury h-11 w-full rounded-lg px-3 py-2.5">
+                        </div>
+                    </div>
+                    <div>
+                        <label for="prod-availability" class="mb-1 block text-[9px] font-bold uppercase text-gray-500">Estado del platillo</label>
+                        <select id="prod-availability" class="input-luxury h-11 w-full rounded-lg px-3 py-2.5">
+                            <option value="true">Disponible</option>
+                            <option value="false">Agotado</option>
+                        </select>
+                    </div>
+                    <div class="relative font-sans">
+                        <div class="flex justify-between mb-1">
+                            <label for="prod-desc" class="text-[9px] text-gray-500 uppercase font-bold">Descripción (ES)</label>
+                            <button data-action="generate-product-copy"
+                                class="text-[10px] text-king-gold hover:text-white flex items-center gap-1 transition"><i
+                                    class="fa-solid fa-wand-magic-sparkles"></i> Completar plantilla</button>
+                        </div>
+                        <textarea id="prod-desc" rows="2"
+                            class="input-luxury px-3 py-2.5 rounded-lg w-full text-xs"></textarea>
+                    </div>
+                    <div><label for="prod-desc-en" class="text-[9px] text-gray-500 uppercase font-bold mb-1 block">Description
+                            (EN)</label><textarea id="prod-desc-en" rows="2"
+                            class="input-luxury px-3 py-2.5 rounded-lg w-full text-xs"></textarea></div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div><label for="prod-ing" class="text-[9px] text-gray-500 uppercase font-bold mb-1 block">Ingredientes
+                                (ES)</label><input type="text" id="prod-ing"
+                                class="input-luxury px-3 py-2.5 rounded-lg w-full h-11"></div>
+                        <div><label for="prod-ing-en" class="text-[9px] text-gray-500 uppercase font-bold mb-1 block">Ingredients
+                                (EN)</label><input type="text" id="prod-ing-en"
+                                class="input-luxury px-3 py-2.5 rounded-lg w-full h-11"></div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div><label for="prod-allergens" class="text-[9px] text-amber-200 uppercase font-bold mb-1 block">Alérgenos declarados (ES) *</label><input type="text" id="prod-allergens" required
+                                placeholder="Ej.: mariscos, lácteos, gluten o No declarado" class="input-luxury px-3 py-2.5 rounded-lg w-full h-11"></div>
+                        <div><label for="prod-allergens-en" class="text-[9px] text-amber-200 uppercase font-bold mb-1 block">Declared allergens (EN)</label><input type="text" id="prod-allergens-en"
+                                placeholder="e.g. shellfish, dairy, gluten or Not declared"
+                                class="input-luxury px-3 py-2.5 rounded-lg w-full h-11"></div>
+                    </div>
+                    <div class="space-y-2 mt-2">
+                        <div class="flex justify-between items-center">
+                            <label class="text-[9px] text-gray-500 uppercase font-bold tracking-wider">Imágenes del
+                                Platillo</label>
+                            <div class="flex gap-2">
+                                <button type="button" data-action="trigger-admin-upload"
+                                    class="text-[10px] text-king-gold hover:text-white flex items-center gap-1 transition"><i
+                                        class="fa-solid fa-file-image"></i> Subir foto</button>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <input id="admin-image-url-input" type="url" inputmode="url" data-i18n-aria-label="image_url_label" placeholder="Pegar URL de imagen (https://...)"
+                                class="input-luxury min-w-0 flex-1 rounded-lg px-3 py-2.5 text-xs">
+                            <button type="button" data-action="add-admin-image-input"
+                                class="rounded-lg border border-king-gold/30 px-3 text-[10px] font-bold text-king-gold hover:bg-king-gold/10"
+                                aria-label="Recortar y agregar imagen desde URL"><i class="fa-solid fa-plus" aria-hidden="true"></i></button>
+                        </div>
+                        <p class="text-[9px] text-gray-500">Arrastra para encuadrar, ajusta el zoom y selecciona una portada.</p>
+                        <div id="admin-image-cropper" class="admin-image-cropper" hidden>
+                            <div id="admin-image-cropper-stage" class="admin-image-cropper-stage">
+                                <img id="admin-image-cropper-image" alt="Vista previa de recorte" draggable="false">
+                                <span class="admin-image-crop-frame" aria-hidden="true"></span>
+                            </div>
+                            <label class="flex items-center gap-3 text-[10px] text-gray-300">
+                                Zoom
+                                <input id="admin-image-zoom" type="range" min="1" max="3" step="0.01" value="1"
+                                    data-action="crop-zoom" class="w-full accent-king-gold">
+                            </label>
+                            <label class="flex items-center gap-3 text-[10px] text-gray-300">
+                                Ángulo
+                                <input id="admin-image-rotation" type="range" min="-180" max="180" step="1" value="0"
+                                    data-action="crop-rotation" class="w-full accent-king-gold">
+                                <output id="admin-image-rotation-value" class="w-10 text-right">0°</output>
+                            </label>
+                            <div class="flex gap-2">
+                                <button type="button" data-action="reset-admin-crop"
+                                    class="flex-1 rounded-lg border border-king-gold/30 py-2 text-[10px] font-bold text-king-gold hover:bg-king-gold/10 transition">
+                                    <i class="fa-solid fa-rotate-left mr-1" aria-hidden="true"></i>Restablecer
+                                </button>
+                                <button type="button" data-action="cancel-admin-crop"
+                                    class="flex-1 rounded-lg border border-white/10 py-2 text-[10px] font-bold text-gray-300">Cancelar</button>
+                                <button type="button" data-action="apply-admin-crop"
+                                    class="flex-1 rounded-lg bg-king-gold py-2 text-[10px] font-bold text-black">Usar imagen recortada</button>
+                            </div>
+                        </div>
+                        <div id="admin-images-container" class="admin-image-gallery custom-scroll">
+                        </div>
+                    </div>
+                    <div><label for="product-model3d-url" class="text-[9px] text-gray-500 uppercase font-bold mb-1 block text-king-gold">URL de
+                            Modelo 3D (.glb - Opcional)</label><input type="text" id="product-model3d-url"
+                            class="input-luxury px-3 py-2.5 rounded-lg w-full border-king-gold/30 h-11"></div>
+                </div>
+                <div class="p-4 border-t border-white/10 flex gap-3 bg-black/20 font-sans">
+                    <button data-action="close-modal" data-modal="product-modal"
+                        class="flex-1 py-3 rounded-xl border border-white/10 text-gray-400 hover:text-white font-bold transition h-12"
+                        data-i18n="btn_cancel">Cancelar</button>
+                    <button type="button" data-action="save-product" id="product-modal-save" class="flex-1 btn-gold py-3 rounded-xl h-12"
+                        data-i18n="btn_save">Guardar Platillo</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- HELP & ASSISTANCE MODAL (Senior & Universal UX Guide) -->
+        <div id="help-modal" class="fixed inset-0 z-[80] flex items-center justify-center p-4 hidden"
+            role="dialog" aria-modal="true" aria-labelledby="help-modal-title" aria-hidden="true" tabindex="-1" inert>
+            <div class="absolute inset-0 bg-black/90 backdrop-blur-md" data-action="dismiss-help-modal"></div>
+            <div class="relative bg-king-surface border border-king-gold/30 w-full max-w-lg rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.9)] flex flex-col max-h-[90vh] overflow-hidden animate-slide-up">
+                
+                <!-- Modal Header -->
+                <div class="p-5 border-b border-white/10 flex justify-between items-center bg-gradient-to-r from-king-gold/10 via-transparent to-transparent font-sans">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-king-gold/15 border border-king-gold/30 flex items-center justify-center text-king-gold">
+                            <i class="fa-solid fa-circle-question text-lg"></i>
+                        </div>
+                        <div>
+                            <h3 id="help-modal-title" class="text-base font-bold text-white font-serif" data-i18n="help_title">Guía de Asistencia al Comensal</h3>
+                            <p class="text-[11px] text-gray-400 font-sans" data-i18n="help_subtitle">¿Cómo realizar su pedido imperial paso a paso?</p>
+                        </div>
+                    </div>
+                    <button data-action="close-help" data-i18n-aria-label="modal_close"
+                        class="text-gray-400 hover:text-white p-2 transition active:scale-90" title="Cerrar Guía">
+                        <i class="fa-solid fa-xmark text-xl"></i>
+                    </button>
+                </div>
+
+                <!-- Modal Body: Step by Step Cards -->
+                <div class="p-5 overflow-y-auto space-y-3.5 custom-scroll font-sans text-xs">
+                    
+                    <!-- Step 1 -->
+                    <div class="bg-white/5 border border-white/10 hover:border-king-gold/30 rounded-xl p-4 flex gap-4 items-start transition-all">
+                        <div class="w-9 h-9 rounded-full bg-king-gold/20 border border-king-gold/40 text-king-gold font-mono font-black text-sm flex items-center justify-center flex-shrink-0 shadow-lg">
+                            1
+                        </div>
+                        <div class="flex-grow">
+                            <h4 class="text-sm font-bold text-white font-serif mb-1 flex items-center gap-2">
+                                <span data-i18n="help_step1_title">1. Explore la Carta</span>
+                                <i class="fa-solid fa-book-open text-king-gold text-xs"></i>
+                            </h4>
+                            <p class="text-xs text-gray-300 leading-relaxed font-sans" data-i18n="help_step1_desc">
+                                Navegue entre las categorías (Entradas, Fuertes, Postres...) o utilice el buscador superior para encontrar sus platillos predilectos.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Step 2 -->
+                    <div class="bg-white/5 border border-white/10 hover:border-king-gold/30 rounded-xl p-4 flex gap-4 items-start transition-all">
+                        <div class="w-9 h-9 rounded-full bg-king-gold/20 border border-king-gold/40 text-king-gold font-mono font-black text-sm flex items-center justify-center flex-shrink-0 shadow-lg">
+                            2
+                        </div>
+                        <div class="flex-grow">
+                            <h4 class="text-sm font-bold text-white font-serif mb-1 flex items-center gap-2">
+                                <span data-i18n="help_step2_title">2. Seleccione sus Platillos</span>
+                                <i class="fa-solid fa-circle-plus text-king-gold text-xs"></i>
+                            </h4>
+                            <p class="text-xs text-gray-300 leading-relaxed font-sans" data-i18n="help_step2_desc">
+                                Haga clic en cualquier platillo para ver sus ingredientes, fotografías en alta definición, vista 3D/AR y toque '+' para agregarlo a su pedido.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Step 3 -->
+                    <div class="bg-white/5 border border-white/10 hover:border-king-gold/30 rounded-xl p-4 flex gap-4 items-start transition-all">
+                        <div class="w-9 h-9 rounded-full bg-king-gold/20 border border-king-gold/40 text-king-gold font-mono font-black text-sm flex items-center justify-center flex-shrink-0 shadow-lg">
+                            3
+                        </div>
+                        <div class="flex-grow">
+                            <h4 class="text-sm font-bold text-white font-serif mb-1 flex items-center gap-2">
+                                <span data-i18n="help_step3_title">3. Revise su pedido</span>
+                                <i class="fa-solid fa-bag-shopping text-king-gold text-xs"></i>
+                            </h4>
+                            <p class="text-xs text-gray-300 leading-relaxed font-sans" data-i18n="help_step3_desc">
+                                Abra 'Su pedido', revise los platillos e ingrese su nombre o apodo. La mesa se identifica con el código QR asignado.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Step 4 -->
+                    <div class="bg-white/5 border border-white/10 hover:border-king-gold/30 rounded-xl p-4 flex gap-4 items-start transition-all">
+                        <div class="w-9 h-9 rounded-full bg-king-gold/20 border border-king-gold/40 text-king-gold font-mono font-black text-sm flex items-center justify-center flex-shrink-0 shadow-lg">
+                            4
+                        </div>
+                        <div class="flex-grow">
+                            <h4 class="text-sm font-bold text-white font-serif mb-1 flex items-center gap-2">
+                                <span data-i18n="help_step4_title">4. Confirme y Siga su Pedido</span>
+                                <i class="fa-solid fa-receipt text-king-gold text-xs"></i>
+                            </h4>
+                            <p class="text-xs text-gray-300 leading-relaxed font-sans" data-i18n="help_step4_desc">
+                                Presione 'Enviar pedido'. Podrá seguir el progreso de preparación en tiempo real desde la sección 'Pedido'.
+                            </p>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="p-4 border-t border-white/10 bg-black/40 font-sans flex justify-end">
+                    <button data-action="close-help" class="w-full btn-gold py-3 rounded-xl font-bold text-xs uppercase tracking-wider h-12 shadow-lg active:scale-95 transition-transform" data-i18n="help_close_btn">
+                        ¡Entendido, deseo ordenar!
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- DIALOGO CONFIRMACION -->
+        <div id="confirm-modal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 hidden"
+            role="dialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-msg"
+            aria-hidden="true" tabindex="-1" inert>
+            <div class="absolute inset-0 bg-black/90 backdrop-blur-sm" data-action="close-modal" data-modal="confirm-modal"></div>
+            <div
+                class="relative bg-king-surface border border-white/10 p-6 rounded-2xl w-full max-w-sm shadow-2xl text-center">
+                <div
+                    class="w-14 h-14 bg-king-gold/10 rounded-full flex items-center justify-center mx-auto mb-4 text-king-gold text-2xl border border-king-gold/20">
+                    <i class="fa-solid fa-circle-question"></i>
+                </div>
+                <h3 id="confirm-title" class="text-base font-serif text-white mb-2 font-display">Confirmación</h3>
+                <p id="confirm-msg" class="text-gray-400 text-xs mb-6 font-sans">¿Desea proceder con esta acción?</p>
+                <div class="flex gap-3 font-sans">
+                    <button data-action="close-modal" data-modal="confirm-modal"
+                        class="flex-1 py-2.5 rounded-xl border border-white/10 text-gray-400 hover:text-white text-xs font-bold transition h-11"
+                        data-i18n="btn_cancel">Cancelar</button>
+                    <button id="confirm-btn-action" class="flex-1 btn-gold py-2.5 rounded-xl text-xs h-11"
+                        data-i18n="btn_confirm">Confirmar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TOAST -->
+        <div id="toast"
+            class="fixed top-24 right-4 z-[90] transform translate-x-[150%] transition-transform duration-500 opacity-0 pointer-events-none">
+            <div
+                class="glass-panel px-6 py-4 rounded-xl flex items-center gap-4 border-l-4 border-king-gold shadow-2xl">
+                <div id="toast-icon" class="text-king-gold text-xl"><i class="fa-solid fa-check"></i></div>
+                <div class="font-sans">
+                    <h4 id="toast-title" class="text-white font-bold text-xs">Aviso</h4>
+                    <p id="toast-msg" class="text-gray-400 text-[10px]">Detalle de notificación.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- FAB MOBILE -->
+        <div id="fab-waiter" class="fixed bottom-6 left-6 z-30 md:hidden transition-transform duration-300">
+            <button data-action="open-modal" data-modal="waiter-modal"
+                class="flex items-center gap-2 px-5 h-14 rounded-full bg-king-gold hover:bg-king-goldHover text-black shadow-2xl shadow-king-gold/30 border border-white/10 font-sans text-xs font-black uppercase tracking-widest animate-pulse w-44">
+                <i class="fa-solid fa-bell text-sm animate-bounce"></i>
+                <span data-i18n="fab_waiter">Llamar Mesero</span>
+            </button>
+        </div>
+        <div id="fab-cart" class="fixed bottom-6 right-6 z-30 md:hidden transition-transform duration-300">
+            <button data-action="open-modal" data-modal="cart-modal"
+                class="w-14 h-14 rounded-full bg-king-surface text-king-gold border border-king-gold hover:bg-king-gold hover:text-black shadow-2xl flex items-center justify-center relative active:scale-90 transition-all">
+                <i class="fa-solid fa-bag-shopping text-lg"></i>
+                <div id="cart-badge-mobile"
+                    class="absolute -top-1 -right-1 w-5 h-5 bg-red-600 text-white text-[9px] font-extrabold rounded-full flex items-center justify-center border border-black scale-0 transition-transform">
+                    0</div>
+            </button>
+        </div>
+    </div>
+
+    <script type="module" src="./js/app.js"></script>
+</body>
+
+</html>

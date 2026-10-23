@@ -211,6 +211,10 @@ function setupEventListeners() {
             case 'set-view': ui.setView(button.dataset.view); break;
             case 'open-modal': ui.openModal(button.dataset.modal); break;
             case 'close-modal': ui.closeModal(button.dataset.modal); break;
+            case 'open-qr-modal': ui.openQrModal(); break;
+            case 'close-qr-modal': ui.closeQrModal(); break;
+            case 'open-staff-modal': ui.openStaffModal(); break;
+            case 'close-staff-modal': ui.closeStaffModal(); break;
             case 'open-help': ui.openHelpModal(); break;
             case 'toggle-language': ui.toggleLanguage(); break;
             case 'logout': ui.logout(); break;
@@ -246,6 +250,8 @@ function setupEventListeners() {
             case 'submit-order': ui.submitOrder(); break;
             case 'send-waiter-call': ui.sendWaiterCall(); break;
             case 'generate-table-qr': ui.generateTableQr(); break;
+            case 'toggle-saved-qr': ui.toggleSavedTableQr(button.dataset.qrTable); break;
+            case 'delete-saved-qr': ui.deleteSavedTableQr(button.dataset.qrTable); break;
             case 'reload-staff': ui.refreshStaffList(); break;
             case 'create-staff': ui.createStaff(); break;
             case 'deactivate-staff': ui.deactivateStaff(button.dataset.staffUid, button.dataset.staffEmail); break;

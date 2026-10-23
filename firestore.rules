@@ -101,7 +101,23 @@ service cloud.firestore {
       allow read: if appId == 'kingmenu-caa89'
         && signedIn()
         && (userId == request.auth.uid || isOwner(appId));
-      allow create, update, delete: if false;
+      allow create: if appId == 'kingmenu-caa89'
+        && isOwner(appId)
+        && request.resource.data.keys().hasOnly(['role', 'active', 'email', 'createdAt'])
+        && request.resource.data.keys().hasAll(['role', 'active', 'email', 'createdAt'])
+        && request.resource.data.role == 'employee'
+        && request.resource.data.active == true
+        && request.resource.data.email is string
+        && request.resource.data.email.size() <= 254
+        && request.resource.data.createdAt == request.time;
+      allow update: if appId == 'kingmenu-caa89'
+        && isOwner(appId)
+        && resource.data.role == 'employee'
+        && request.resource.data.role == 'employee'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['active', 'deactivatedAt'])
+        && request.resource.data.active == false
+        && request.resource.data.deactivatedAt == request.time;
+      allow delete: if false;
     }
 
     match /artifacts/{appId}/public/data/products/{productId} {

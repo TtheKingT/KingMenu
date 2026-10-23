@@ -62,8 +62,10 @@ function parseRequest(data) {
     if (data.status !== undefined && data.status !== 'pending') {
         throw new HttpsError('invalid-argument', 'El estado inicial de la comanda no es válido.');
     }
-    const tableSignature = requireString(data.tableSignature, 'Firma del código QR', 64);
-    if (!isValidTableSignature(table, tableSignature)) {
+    const tableSignature = data.tableSignature === undefined
+        ? ''
+        : requireString(data.tableSignature, 'Firma del código QR', 64, { allowEmpty: true });
+    if (tableSignature && !isValidTableSignature(table, tableSignature)) {
         throw new HttpsError('permission-denied', 'Escanee el código QR válido de su mesa para continuar.');
     }
     const notes = requireString(data.notes ?? '', 'Instrucciones', 500, { allowEmpty: true });
@@ -462,8 +464,10 @@ exports.createWaiterCall = onCall({
 }, async request => {
     if (!request.auth) throw new HttpsError('unauthenticated', 'Se requiere una sesión para llamar a un mesero.');
     const table = requireString(request.data?.table, 'Número de mesa', 3);
-    const signature = requireString(request.data?.tableSignature, 'Firma del código QR', 64);
-    if (!/^[0-9]{1,3}$/.test(table) || !isValidTableSignature(table, signature)) {
+    const signature = request.data?.tableSignature === undefined
+        ? ''
+        : requireString(request.data.tableSignature, 'Firma del código QR', 64, { allowEmpty: true });
+    if (!/^[0-9]{1,3}$/.test(table) || (signature && !isValidTableSignature(table, signature))) {
         throw new HttpsError('permission-denied', 'Escanee el código QR válido de su mesa para solicitar asistencia.');
     }
 

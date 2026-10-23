@@ -59,6 +59,7 @@ let chefDrawerReturnFocus = null;
 let adminCategoryImages = [];
 let adminCategorySaveInProgress = false;
 let waiterCallPending = false;
+let expandedQrTable = null;
 let isAdminMfaStep = false;
 let adminLoginLoadPromise = null;
 let adminPanelLoadPromise = null;
@@ -114,7 +115,6 @@ export async function loadAdminPanel() {
         recalcSales();
         if (isOwner()) {
             renderCategoriesManage();
-            void refreshStaffList();
         }
     })().catch(error => {
         adminPanelLoadPromise = null;
@@ -575,7 +575,8 @@ function trapDialogFocus(event) {
 }
 
 export function openModal(id) {
-    if (['categories-modal', 'product-modal'].includes(id) && !requireOwner()) return;
+    if (['categories-modal', 'product-modal', 'admin-qr-modal', 'admin-staff-modal'].includes(id)
+        && !requireOwner()) return;
     const currentState = history.state || { view: 'menu', experienceView: activeExperienceView };
     if (currentState.modal !== id) {
         history.pushState({ ...currentState, view: currentState.view || 'menu', modal: id, experienceView: activeExperienceView }, '', '');
@@ -2884,7 +2885,6 @@ export async function sendWaiterCall() {
 export async function generateTableQr() {
     if (!requireOwner()) return;
     const input = document.getElementById('admin-qr-table');
-    const output = document.getElementById('admin-qr-output');
     const table = input?.value.trim() || '';
     if (!/^[0-9]{1,3}$/.test(table)) {
         showToast('Error', currentLang === 'en'
@@ -2894,32 +2894,142 @@ export async function generateTableQr() {
     }
     try {
         const result = await dbService.generateTableQr(table);
-        if (!output) return;
-        output.replaceChildren();
-        const image = document.createElement('img');
-        image.src = result.qrDataUrl;
-        image.alt = currentLang === 'en' ? `QR code for table ${table}` : `Código QR para la mesa ${table}`;
-        image.className = 'mx-auto w-48 rounded-xl bg-white p-2';
-        const link = document.createElement('a');
-        link.href = result.url;
-        link.textContent = result.url;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
-        link.className = 'block break-all text-xs text-cyan-200 underline';
-        const copyButton = document.createElement('button');
-        copyButton.type = 'button';
-        copyButton.dataset.action = 'copy-table-qr';
-        copyButton.dataset.qrUrl = result.url;
-        copyButton.className = 'mt-2 rounded-lg border border-white/10 px-3 py-2 text-xs text-white hover:bg-white/10';
-        copyButton.textContent = currentLang === 'en' ? 'Copy link' : 'Copiar enlace';
-        output.append(image, link, copyButton);
-        output.classList.remove('hidden');
+        const savedQrs = loadSavedTableQrs();
+        const updatedQrs = savedQrs.filter(qr => qr.table !== table);
+        updatedQrs.push({ table, url: result.data.url, qrDataUrl: result.data.qrDataUrl });
+        saveTableQrs(updatedQrs);
+        expandedQrTable = table;
+        renderSavedTableQrs();
+        if (input) input.value = '';
     } catch (error) {
         console.error('[Table QR] No se pudo generar el código QR:', error);
         showToast('Error', error?.message || (currentLang === 'en'
             ? 'Could not generate the table QR code.'
             : 'No se pudo generar el código QR de la mesa.'), true);
     }
+}
+
+function loadSavedTableQrs() {
+    const saved = localStorage.getItem('kingmenu_qrs');
+    if (!saved) return [];
+    const parsed = JSON.parse(saved);
+    if (!Array.isArray(parsed) || parsed.some(qr =>
+        !qr || typeof qr !== 'object'
+        || typeof qr.table !== 'string' || !/^[0-9]{1,3}$/.test(qr.table)
+        || typeof qr.url !== 'string'
+        || typeof qr.qrDataUrl !== 'string'
+    )) {
+        throw new Error('La lista local de códigos QR tiene un formato inválido.');
+    }
+    return parsed;
+}
+
+function saveTableQrs(qrs) {
+    localStorage.setItem('kingmenu_qrs', JSON.stringify(qrs));
+}
+
+function renderSavedTableQrs() {
+    const list = document.getElementById('admin-qr-list');
+    if (!list) return;
+    const savedQrs = loadSavedTableQrs();
+    list.replaceChildren();
+    if (!savedQrs.length) {
+        const emptyMessage = document.createElement('p');
+        emptyMessage.className = 'text-xs text-gray-400';
+        emptyMessage.textContent = 'Todavía no hay códigos QR guardados.';
+        list.appendChild(emptyMessage);
+        return;
+    }
+
+    savedQrs.forEach(qr => {
+        const item = document.createElement('div');
+        item.className = 'rounded-xl border border-white/10 bg-black/20 p-3';
+        const tableButton = document.createElement('button');
+        tableButton.type = 'button';
+        tableButton.dataset.action = 'toggle-saved-qr';
+        tableButton.dataset.qrTable = qr.table;
+        tableButton.setAttribute('aria-expanded', String(expandedQrTable === qr.table));
+        tableButton.setAttribute('aria-label', `Mostrar código QR de la mesa ${qr.table}`);
+        tableButton.className = 'flex min-h-10 w-full items-center justify-between text-left text-xs font-bold text-white';
+        tableButton.textContent = qr.table;
+        const indicator = document.createElement('span');
+        indicator.className = 'text-king-gold';
+        indicator.textContent = expandedQrTable === qr.table ? '−' : '+';
+        tableButton.appendChild(indicator);
+        item.appendChild(tableButton);
+
+        if (expandedQrTable === qr.table) {
+            const details = document.createElement('div');
+            details.className = 'mt-3 space-y-3 border-t border-white/10 pt-3';
+            const image = document.createElement('img');
+            image.src = qr.qrDataUrl;
+            image.alt = `Código QR para la mesa ${qr.table}`;
+            image.className = 'mx-auto w-48 rounded-xl bg-white p-2';
+            const actions = document.createElement('div');
+            actions.className = 'flex justify-center gap-2';
+            const download = document.createElement('a');
+            download.href = qr.qrDataUrl;
+            download.download = `QR_Mesa_${qr.table}.png`;
+            download.className = 'rounded-lg bg-king-gold px-4 py-2 text-xs font-bold text-black';
+            download.textContent = 'Descargar';
+            const remove = document.createElement('button');
+            remove.type = 'button';
+            remove.dataset.action = 'delete-saved-qr';
+            remove.dataset.qrTable = qr.table;
+            remove.className = 'rounded-lg border border-red-400/30 bg-red-500/15 px-4 py-2 text-xs font-bold text-red-200 hover:bg-red-500/25';
+            remove.textContent = 'Eliminar';
+            actions.append(download, remove);
+            details.append(image, actions);
+            item.appendChild(details);
+        }
+        list.appendChild(item);
+    });
+}
+
+export function toggleSavedTableQr(table) {
+    try {
+        expandedQrTable = expandedQrTable === table ? null : table;
+        renderSavedTableQrs();
+    } catch (error) {
+        console.error('[Table QR] No se pudo cargar la lista guardada:', error);
+        showToast('Error', error?.message || 'No se pudo cargar la lista de códigos QR.', true);
+    }
+}
+
+export function deleteSavedTableQr(table) {
+    try {
+        saveTableQrs(loadSavedTableQrs().filter(qr => qr.table !== table));
+        if (expandedQrTable === table) expandedQrTable = null;
+        renderSavedTableQrs();
+    } catch (error) {
+        console.error('[Table QR] No se pudo eliminar el código QR:', error);
+        showToast('Error', error?.message || 'No se pudo eliminar el código QR.', true);
+    }
+}
+
+export function openQrModal() {
+    if (!requireOwner()) return;
+    try {
+        renderSavedTableQrs();
+        openModal('admin-qr-modal');
+    } catch (error) {
+        console.error('[Table QR] No se pudo abrir la lista guardada:', error);
+        showToast('Error', error?.message || 'No se pudo abrir la lista de códigos QR.', true);
+    }
+}
+
+export function closeQrModal() {
+    closeModal('admin-qr-modal');
+}
+
+export function openStaffModal() {
+    if (!requireOwner()) return;
+    openModal('admin-staff-modal');
+    void refreshStaffList();
+}
+
+export function closeStaffModal() {
+    closeModal('admin-staff-modal');
 }
 
 function renderStaffList() {
@@ -2958,8 +3068,8 @@ export async function refreshStaffList() {
     const list = document.getElementById('staff-list');
     if (list) list.textContent = t('staff_loading');
     try {
-        const result = await dbService.manageStaff('list');
-        state.employees = result.employees.filter(employee =>
+        const result = await dbService.manageStaff({ action: 'list' });
+        state.employees = result.data.employees.filter(employee =>
             employee && typeof employee.uid === 'string'
             && (typeof employee.email === 'string' || employee.email === undefined)
             && typeof employee.disabled === 'boolean'
@@ -2989,7 +3099,7 @@ export async function createStaff() {
         return;
     }
     try {
-        await dbService.manageStaff('create', { email, password });
+        await dbService.manageStaff({ action: 'create', email, password });
         if (emailInput) emailInput.value = '';
         if (passwordInput) {
             passwordInput.value = '';
@@ -3008,7 +3118,7 @@ export function deactivateStaff(uid, email) {
     const confirmation = t('staff_deactivate_confirm').replace('{email}', email || uid);
     confirmAction(t('staff_deactivate_title'), confirmation, async () => {
         try {
-            await dbService.manageStaff('deactivate', { uid });
+            await dbService.manageStaff({ action: 'deactivate', uid });
             showToast(t('staff_title'), t('staff_deactivated'));
             await refreshStaffList();
         } catch (error) {

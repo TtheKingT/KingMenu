@@ -4,12 +4,14 @@
  * ==========================================================================
  */
 
-import { getApp, getApps, initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { deleteApp, getApp, getApps, initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app-check.js";
 import {
     getAuth,
+    createUserWithEmailAndPassword,
     signInAnonymously,
     signInWithEmailAndPassword,
+    deleteUser,
     signOut,
     onAuthStateChanged,
     connectAuthEmulator,
@@ -25,6 +27,7 @@ import {
     getDoc,
     getDocs,
     setDoc,
+    updateDoc,
     onSnapshot,
     addDoc,
     deleteDoc,
@@ -77,17 +80,6 @@ function requireStaffRole() {
     if (!['owner', 'employee'].includes(currentUserRole)) {
         throw new Error("Esta operación requiere permisos administrativos.");
     }
-}
-
-function callableError(error, fallbackMessage) {
-    const code = typeof error?.code === 'string' ? error.code.replace(/^functions\//, '') : '';
-    if (code === 'internal' || code === 'unknown' || !code) return new Error(fallbackMessage);
-    const message = typeof error?.details?.message === 'string'
-        ? error.details.message
-        : typeof error?.message === 'string' && !/^(internal|unknown)$/i.test(error.message.trim())
-            ? error.message
-            : fallbackMessage;
-    return new Error(message);
 }
 
 const firebaseConfig = {
@@ -807,62 +799,107 @@ export async function createOrder(orderPayload) {
 
 export function getTableQrAccess() {
     const params = new URLSearchParams(window.location.search);
-    const table = [params.get('m'), params.get('mesa')]
+    const table = [params.get('table'), params.get('m'), params.get('mesa')]
         .find(value => value && /^[0-9]{1,3}$/.test(value)) || '';
     const signature = params.get('s') || '';
-    return /^[0-9]{1,3}$/.test(table) && /^[a-f0-9]{64}$/i.test(signature)
-        ? { table, signature }
+    if (!/^[0-9]{1,3}$/.test(table)) return null;
+    if (/^[a-f0-9]{64}$/i.test(signature)) return { table, signature };
+    return !signature && /^[0-9]{1,3}$/.test(params.get('table') || '')
+        ? { table, signature: '' }
         : null;
 }
 
 export async function generateTableQr(tableNumber) {
-    if (!functions) throw new Error("Firebase Functions no está conectado.");
     requireOwnerRole();
     const table = String(tableNumber ?? '').trim();
     if (!/^[0-9]{1,3}$/.test(table)) throw new Error("El número de mesa debe contener entre 1 y 3 dígitos.");
-    const callable = httpsCallable(functions, 'generateTableQr');
-    let result;
-    try {
-        result = await callable({ table, pageUrl: window.location.href });
-    } catch (error) {
-        throw callableError(error, "No se pudo generar el código QR. Verifique que TABLE_QR_SECRET esté configurado y que su cuenta tenga permisos.");
-    }
-    if (typeof result.data?.url !== 'string' || typeof result.data?.qrDataUrl !== 'string') {
-        throw new Error("La función no devolvió los datos del código QR.");
-    }
-    return result.data;
+    const tableUrl = window.location.origin + '/?table=' + table;
+    const qrDataUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(tableUrl)}`;
+    return { data: { url: tableUrl, qrDataUrl } };
 }
 
-export async function manageStaff(action, payload = {}) {
-    if (!functions) throw new Error("Firebase Functions no está conectado.");
+export async function manageStaff(payload = {}) {
     requireOwnerRole();
+    const { action } = payload;
     if (!['list', 'create', 'deactivate'].includes(action)) {
         throw new Error("La operación de empleados no es válida.");
     }
-    const request = action === 'create'
-        ? { action, email: payload.email, password: payload.password }
-        : action === 'deactivate'
-            ? { action, uid: payload.uid }
-            : { action };
-    const callable = httpsCallable(functions, 'manageStaff');
-    let result;
-    try {
-        result = await callable(request);
-    } catch (error) {
-        const fallbacks = {
-            list: "No se pudo cargar la lista de empleados. Revise su conexión y los permisos de Firebase.",
-            create: "No se pudo crear el empleado. Verifique el correo, la contraseña y los permisos de Firebase.",
-            deactivate: "No se pudo desactivar el empleado. Revise su conexión y los permisos de Firebase."
+    if (!db) throw new Error("Firestore no está conectado.");
+
+    const usersRef = collection(db, "artifacts", appId, "public", "data", "users");
+    if (action === 'list') {
+        const snapshot = await getDocs(query(usersRef, where('role', '==', 'employee')));
+        return {
+            data: {
+                employees: snapshot.docs.map(employeeDoc => {
+                    const employee = employeeDoc.data();
+                    return {
+                        uid: employeeDoc.id,
+                        email: typeof employee.email === 'string' ? employee.email : '',
+                        disabled: employee.active === false
+                    };
+                })
+            }
         };
-        throw callableError(error, fallbacks[action]);
     }
-    if (action === 'list' && !Array.isArray(result.data?.employees)) {
-        throw new Error("La función no devolvió la lista de empleados.");
+
+    if (action === 'create') {
+        const email = typeof payload.email === 'string' ? payload.email.trim().toLowerCase() : '';
+        const password = payload.password;
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) {
+            throw new Error("El correo electrónico no es válido.");
+        }
+        if (typeof password !== 'string' || password.length < 12 || password.length > 128) {
+            throw new Error("La contraseña inicial debe tener entre 12 y 128 caracteres.");
+        }
+
+        const secondaryApp = initializeApp(firebaseConfig, 'SecondaryApp');
+        const secondaryAuth = getAuth(secondaryApp);
+        try {
+            if (new URLSearchParams(window.location.search).get('emulator') === '1') {
+                connectAuthEmulator(secondaryAuth, 'http://127.0.0.1:9099', { disableWarnings: true });
+            }
+
+            const credential = await createUserWithEmailAndPassword(secondaryAuth, email, password);
+            try {
+                await setDoc(doc(usersRef, credential.user.uid), {
+                    role: 'employee',
+                    active: true,
+                    email,
+                    createdAt: serverTimestamp()
+                });
+            } catch (error) {
+                try {
+                    await deleteUser(credential.user);
+                } catch (cleanupError) {
+                    console.error('[Staff] No se pudo limpiar la cuenta Auth tras fallar la creación del perfil:', cleanupError);
+                }
+                throw error;
+            }
+            return { data: { success: true } };
+        } finally {
+            try {
+                await signOut(secondaryAuth);
+            } finally {
+                await deleteApp(secondaryApp);
+            }
+        }
     }
-    if (action !== 'list' && typeof result.data?.uid !== 'string') {
-        throw new Error("La función no devolvió el identificador de empleado.");
+
+    const uid = typeof payload.uid === 'string' ? payload.uid : '';
+    if (!/^[A-Za-z0-9_-]{1,128}$/.test(uid)) {
+        throw new Error("El identificador de empleado no es válido.");
     }
-    return result.data;
+    const employeeRef = doc(usersRef, uid);
+    const employeeSnapshot = await getDoc(employeeRef);
+    if (!employeeSnapshot.exists() || employeeSnapshot.data().role !== 'employee') {
+        throw new Error("No se encontró el empleado solicitado.");
+    }
+    await updateDoc(employeeRef, {
+        active: false,
+        deactivatedAt: serverTimestamp()
+    });
+    return { data: { uid, disabled: true } };
 }
 
 export async function updateOrderStatus(id, status) {

@@ -1,0 +1,148 @@
+<div id="view-admin" class="hidden animate-fade-in pb-20">
+    <div class="mb-8 flex flex-col items-start justify-between gap-4 border-b border-white/5 pb-6 lg:flex-row lg:items-center">
+        <div>
+            <h2 class="mb-1 text-2xl font-display font-bold text-white md:text-3xl" data-i18n="admin_title">Panel de Control Imperial</h2>
+            <p class="text-[10px] font-bold uppercase tracking-wider text-gray-500" data-i18n="admin_sub">Gestión y Telemetría Culinaria en Tiempo Real</p>
+        </div>
+        <div class="flex w-full flex-wrap gap-2.5 lg:w-auto">
+            <button data-role-owner data-action="seed-demo" class="flex items-center justify-center gap-2 rounded-xl border border-blue-500/30 bg-blue-600/20 px-4 py-2 text-xs font-bold text-blue-400 shadow-lg transition hover:bg-blue-600/30">
+                <i class="fa-solid fa-cube animate-bounce"></i> <span data-i18n="admin_demo">Cargar Demos AR</span>
+            </button>
+            <button data-role-owner data-action="go-to-menu-admin" class="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold text-white transition hover:bg-white/10">
+                <i class="fa-solid fa-list-check text-king-gold"></i> <span data-i18n="admin_menu">Carta</span>
+            </button>
+            <button data-role-owner data-action="open-modal" data-modal="categories-modal" class="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold text-white transition hover:bg-white/10">
+                <i class="fa-solid fa-tags text-king-gold"></i> <span data-i18n="admin_cats">Categorías</span>
+            </button>
+            <button data-role-owner data-action="new-product" class="btn-gold flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-xs">
+                <i class="fa-solid fa-plus"></i> <span data-i18n="admin_create">Crear Platillo</span>
+            </button>
+            <a href="/cocina" class="flex items-center justify-center gap-2 rounded-xl border border-emerald-400/30 bg-emerald-500/10 px-4 py-2 text-xs font-bold text-emerald-200 transition hover:bg-emerald-500/20">
+                <i class="fa-solid fa-kitchen-set" aria-hidden="true"></i> <span data-i18n="kitchen_open">Abrir cocina</span>
+            </a>
+            <button data-action="logout" data-i18n-aria-label="admin_logout" class="rounded-xl border border-white/10 px-3 py-2 text-xs font-bold text-red-400 transition hover:bg-red-950/35">
+                <i class="fa-solid fa-right-from-bracket"></i>
+            </button>
+        </div>
+    </div>
+
+    <div data-role-owner class="glass-panel mb-8 rounded-xl p-5 font-sans">
+        <h3 class="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-white">
+            <i class="fa-solid fa-qrcode text-king-gold"></i>
+            <span data-i18n="admin_table_qr">Códigos QR firmados por mesa</span>
+        </h3>
+        <div class="flex flex-col gap-3 sm:flex-row">
+            <label for="admin-qr-table" class="sr-only" data-i18n="check_table">Número de mesa</label>
+            <input id="admin-qr-table" type="number" min="1" max="999" inputmode="numeric"
+                data-i18n-placeholder="admin_table_qr_ph" placeholder="Número de mesa (1–999)"
+                class="input-luxury h-11 rounded-xl px-4 text-xs text-white sm:max-w-xs">
+            <button type="button" data-action="generate-table-qr" class="btn-gold flex h-11 items-center justify-center gap-2 rounded-xl px-4 text-xs font-bold">
+                <i class="fa-solid fa-qrcode"></i> <span data-i18n="admin_table_qr_generate">Generar QR</span>
+            </button>
+        </div>
+        <div id="admin-qr-output" class="mt-4 hidden space-y-3 rounded-xl border border-white/10 bg-black/30 p-4"></div>
+    </div>
+
+    <section id="staff-management-panel" data-role-owner class="glass-panel mb-8 rounded-xl p-5 font-sans">
+        <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-white" data-i18n="staff_title">Gestión de empleados</h3>
+            <button type="button" data-action="reload-staff" class="min-h-10 rounded-lg border border-white/15 px-3 text-[10px] font-bold text-white" data-i18n="staff_refresh">Actualizar lista</button>
+        </div>
+        <div class="grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
+            <label class="text-[10px] text-gray-300">
+                <span class="mb-1 block" data-i18n="staff_email">Correo del empleado</span>
+                <input id="staff-email" type="email" autocomplete="email" maxlength="254" class="input-luxury h-11 w-full rounded-xl px-4 text-xs text-white" data-i18n-placeholder="staff_email_placeholder" placeholder="nombre@restaurante.com">
+            </label>
+            <label class="text-[10px] text-gray-300">
+                <span class="mb-1 block" data-i18n="staff_password">Contraseña inicial (mínimo 12 caracteres)</span>
+                <input id="staff-password" type="password" autocomplete="new-password" minlength="12" maxlength="128" aria-describedby="staff-password-hint" aria-invalid="false" class="input-luxury h-11 w-full rounded-xl px-4 text-xs text-white" data-i18n-placeholder="staff_password_placeholder" placeholder="Contraseña inicial">
+                <span id="staff-password-hint" class="mt-1 hidden text-[10px] text-red-300" aria-live="polite"></span>
+            </label>
+            <button type="button" data-action="create-staff" class="btn-gold min-h-11 self-end rounded-xl px-4 text-xs font-bold" data-i18n="staff_create">Crear empleado</button>
+        </div>
+        <p class="mt-2 text-[10px] leading-5 text-gray-400" data-i18n="staff_password_notice">Comparta la contraseña inicial por un canal privado y solicite cambiarla después del primer acceso.</p>
+        <div id="staff-list" class="mt-4 space-y-2" aria-live="polite"></div>
+    </section>
+
+    <div class="mb-8 grid grid-cols-1 gap-5 md:grid-cols-3">
+        <div data-role-owner class="glass-panel flex items-center justify-between rounded-xl border-l-4 border-king-gold p-5">
+            <div>
+                <div class="mb-1 flex items-center gap-2">
+                    <p class="font-sans text-[10px] font-bold uppercase tracking-widest text-gray-400" data-i18n="kpi_sales">Ventas de Hoy</p>
+                    <button data-role-owner data-action="reset-sales" data-i18n-aria-label="kpi_sales_reset_t" class="text-gray-500 transition hover:text-white"><i class="fa-solid fa-rotate-right text-xs"></i></button>
+                </div>
+                <h3 id="admin-sales" class="font-mono text-2xl text-white">$0</h3>
+            </div>
+            <div class="flex h-10 w-10 items-center justify-center rounded-full bg-king-gold/10 text-lg text-king-gold"><i class="fa-solid fa-cash-register"></i></div>
+        </div>
+        <div class="glass-panel flex items-center justify-between rounded-xl border-l-4 border-blue-500 p-5">
+            <div>
+                <p class="mb-1 font-sans text-[10px] font-bold uppercase tracking-widest text-gray-400" data-i18n="kpi_calls">Llamados a Mesero</p>
+                <h3 id="admin-calls-count" class="font-mono text-2xl text-white">0</h3>
+            </div>
+            <div class="flex h-10 w-10 items-center justify-center rounded-full bg-blue-500/10 text-lg text-blue-400"><i class="fa-solid fa-bell"></i></div>
+        </div>
+        <div class="glass-panel flex items-center justify-between rounded-xl border-l-4 border-emerald-500 p-5">
+            <div>
+                <p class="mb-1 font-sans text-[10px] font-bold uppercase tracking-widest text-gray-400" data-i18n="kpi_orders">Órdenes Activas</p>
+                <h3 id="admin-orders-count" class="font-mono text-2xl text-white">0</h3>
+            </div>
+            <div class="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500/10 text-lg text-emerald-400"><i class="fa-solid fa-circle-check"></i></div>
+        </div>
+    </div>
+
+    <div data-role-owner class="mb-8 grid grid-cols-1 gap-5 sm:grid-cols-3">
+        <div class="glass-panel rounded-xl border-l-4 border-cyan-500 p-5">
+            <p class="mb-1 text-[10px] font-bold uppercase tracking-widest text-gray-400">Ingresos últimos 7 días</p>
+            <h3 id="admin-week-sales" class="font-mono text-2xl text-white">$0</h3>
+        </div>
+        <div class="glass-panel rounded-xl border-l-4 border-violet-500 p-5">
+            <p class="mb-1 text-[10px] font-bold uppercase tracking-widest text-gray-400">Ticket promedio hoy</p>
+            <h3 id="admin-average-ticket" class="font-mono text-2xl text-white">$0</h3>
+        </div>
+        <div class="glass-panel rounded-xl border-l-4 border-emerald-500 p-5">
+            <p class="mb-1 text-[10px] font-bold uppercase tracking-widest text-gray-400">Pedidos entregados hoy</p>
+            <h3 id="admin-completed-count" class="font-mono text-2xl text-white">0</h3>
+        </div>
+    </div>
+
+    <div id="admin-telemetry-grid" class="mb-8 grid grid-cols-1 gap-6 font-sans lg:grid-cols-3">
+        <div data-role-owner class="glass-panel rounded-xl p-5 lg:col-span-1">
+            <h3 class="mb-4 flex items-center gap-2 border-b border-white/5 pb-2 text-xs font-bold uppercase tracking-wider text-white">
+                <i class="fa-solid fa-chart-bar text-king-gold"></i> <span data-i18n="chart_title">Platillos de Alta Demanda</span>
+            </h3>
+            <div id="analytics-chart" class="flex min-h-[12rem] items-center justify-center"></div>
+        </div>
+        <div id="admin-orders-panel" class="glass-panel rounded-xl p-5 font-sans lg:col-span-2">
+            <div class="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-white/5 pb-3">
+                <h3 class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-white">
+                    <i class="fa-solid fa-kitchen-set text-king-gold" aria-hidden="true"></i> <span data-i18n="monitor_title">Monitor de Comandas de Cocina</span>
+                </h3>
+                <div class="flex flex-wrap items-center gap-2">
+                    <a href="/admin" data-kitchen-navigation class="hidden rounded-lg border border-white/15 px-3 py-2 text-[10px] font-bold text-white" data-i18n="kitchen_admin">Panel</a>
+                    <button type="button" data-action="enable-kitchen-alerts" class="min-h-10 rounded-lg border border-emerald-400/30 bg-emerald-500/10 px-3 text-[10px] font-bold text-emerald-100" data-i18n="kitchen_enable_alerts">Activar alertas</button>
+                    <button type="button" data-action="print-kitchen" class="min-h-10 rounded-lg border border-white/15 px-3 text-[10px] font-bold text-white" aria-label="Imprimir comandas" data-i18n-title="kitchen_print">Imprimir</button>
+                </div>
+            </div>
+            <div id="orders-list" class="custom-scroll max-h-[25rem] space-y-4 overflow-y-auto pr-1"></div>
+        </div>
+    </div>
+
+    <div data-role-owner class="mb-8 grid grid-cols-1 gap-6 font-sans lg:grid-cols-2">
+        <div class="glass-panel rounded-xl p-5">
+            <h3 class="mb-4 border-b border-white/5 pb-2 text-xs font-bold uppercase tracking-wider text-white">Ingresos por día · 7 días</h3>
+            <div id="analytics-revenue-chart" class="min-h-40" role="img" aria-label="Ingresos por día de la última semana"></div>
+        </div>
+        <div class="glass-panel rounded-xl p-5">
+            <h3 class="mb-4 border-b border-white/5 pb-2 text-xs font-bold uppercase tracking-wider text-white">Estado actual de pedidos</h3>
+            <div id="analytics-status-chart" class="min-h-40" role="img" aria-label="Distribución actual de pedidos por estado"></div>
+        </div>
+    </div>
+
+    <div class="glass-panel rounded-xl p-5">
+        <h3 class="mb-4 flex items-center gap-2 border-b border-white/5 pb-2 text-xs font-bold uppercase tracking-wider text-white">
+            <i class="fa-solid fa-bell text-blue-400"></i> <span data-i18n="calls_title">Alertas de Asistencia en Salón</span>
+        </h3>
+        <div id="calls-list" class="grid grid-cols-1 gap-3 md:grid-cols-3"></div>
+    </div>
+</div>

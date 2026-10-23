@@ -1,0 +1,36 @@
+<main id="admin-login-view" class="fixed inset-0 z-[70] flex items-center justify-center bg-black/95 p-4 backdrop-blur-md">
+    <section class="w-full max-w-sm rounded-2xl border border-white/10 bg-king-surface p-6 text-center shadow-2xl" aria-labelledby="admin-login-title">
+        <div class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-white/5 text-gray-400">
+            <i class="fa-solid fa-lock text-lg" aria-hidden="true"></i>
+        </div>
+        <h1 id="admin-login-title" class="mb-2 font-display text-base text-white" data-i18n="login_title">Acceso Administrativo</h1>
+        <p class="mb-4 font-sans text-xs text-gray-500" data-i18n="login_security_hint">Acceso administrativo protegido.</p>
+        <form id="admin-login-form">
+            <div id="admin-primary-auth-fields">
+                <label class="sr-only" for="admin-email">Correo electrónico</label>
+                <input type="email" id="admin-email" autocomplete="username" required placeholder="Correo electrónico"
+                    class="mb-3 w-full rounded-xl input-luxury px-4 py-3 text-center text-sm text-white">
+                <label class="sr-only" for="admin-password">Contraseña</label>
+                <input type="password" id="admin-password" autocomplete="current-password" required placeholder="Contraseña"
+                    class="mb-4 w-full rounded-xl input-luxury px-4 py-3 text-center text-sm tracking-widest text-white">
+            </div>
+            <div id="admin-mfa-fields" class="hidden">
+                <p id="admin-mfa-hint" class="mb-3 text-xs text-gray-300" aria-live="polite"></p>
+                <label class="sr-only" for="admin-mfa-code">Código de verificación</label>
+                <input type="text" id="admin-mfa-code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}"
+                    maxlength="6" disabled data-i18n-placeholder="login_mfa_code_ph" placeholder="Código de seis dígitos"
+                    class="mb-4 w-full rounded-xl input-luxury px-4 py-3 text-center text-lg tracking-[0.4em] text-white">
+            </div>
+            <button type="submit" class="h-12 w-full rounded-xl btn-gold py-3 font-sans text-xs font-bold uppercase tracking-wide"
+                data-i18n="login_btn">Iniciar Sesión</button>
+            <button type="button" data-action="cancel-admin-mfa" id="admin-mfa-cancel" disabled
+                class="mt-3 hidden w-full rounded-xl border border-white/10 py-2 text-xs text-gray-400 hover:text-white">
+                <span data-i18n="btn_cancel">Cancelar</span>
+            </button>
+            <div id="admin-mfa-recaptcha"></div>
+        </form>
+        <a href="/" class="mt-5 inline-flex min-h-11 items-center text-xs text-gray-400 underline-offset-4 hover:text-white hover:underline">
+            Volver al menú
+        </a>
+    </section>
+</main>

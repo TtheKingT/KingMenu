@@ -1,0 +1,6 @@
+.agents/
+.trae/
+.vscode/
+desktop.ini
+node_modules/
+dist/

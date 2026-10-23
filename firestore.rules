@@ -1,0 +1,195 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function userDocumentExists(appId) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/artifacts/$(appId)/public/data/users/$(request.auth.uid));
+    }
+
+    function isOwner(appId) {
+      return userDocumentExists(appId)
+        && get(/databases/$(database)/documents/artifacts/$(appId)/public/data/users/$(request.auth.uid)).data.role == 'owner'
+        && request.auth.token.firebase.sign_in_second_factor in ['phone', 'totp'];
+    }
+
+    function isEmployee(appId) {
+      return userDocumentExists(appId)
+        && get(/databases/$(database)/documents/artifacts/$(appId)/public/data/users/$(request.auth.uid)).data.role == 'employee'
+        && (!('active' in get(/databases/$(database)/documents/artifacts/$(appId)/public/data/users/$(request.auth.uid)).data)
+          || get(/databases/$(database)/documents/artifacts/$(appId)/public/data/users/$(request.auth.uid)).data.active == true);
+    }
+
+    function isStaff(appId) {
+      return isOwner(appId) || isEmployee(appId);
+    }
+
+    function isActiveOrder(status) {
+      return status in [
+        'pending', 'preparing', 'cooking', 'ready',
+        'Recibido', 'Preparando', 'Cocina', 'Listo'
+      ];
+    }
+
+    function normalizeOrderStatus(status) {
+      return status == 'Recibido' ? 'pending'
+        : status == 'Preparando' ? 'preparing'
+        : status == 'Cocina' ? 'cooking'
+        : status == 'Listo' ? 'ready'
+        : status == 'Entregado' ? 'delivered'
+        : status == 'Finalizado' ? 'paid'
+        : status;
+    }
+
+    function validOrderStatusTransition() {
+      let currentStatus = normalizeOrderStatus(resource.data.status);
+      let nextStatus = normalizeOrderStatus(request.resource.data.status);
+      return (currentStatus == 'pending' && nextStatus == 'preparing')
+        || (currentStatus == 'preparing' && nextStatus == 'cooking')
+        || (currentStatus == 'cooking' && nextStatus == 'ready')
+        || (currentStatus == 'ready' && nextStatus == 'delivered')
+        || (currentStatus == 'delivered' && nextStatus == 'paid');
+    }
+
+    function validOrderStatusAudit() {
+      return request.resource.data.statusUpdatedBy == request.auth.uid
+        && request.resource.data.statusUpdatedAt == request.time;
+    }
+
+    function validTable(table) {
+      return table is string && table.matches('^[0-9]{1,3}$');
+    }
+
+    function validCustomer(customer) {
+      return customer is string && customer.size() > 0 && customer.size() <= 60;
+    }
+
+    function validNotes(notes) {
+      return notes is string && notes.size() <= 500;
+    }
+
+    function validOrderItems(items) {
+      return items is list && items.size() > 0 && items.size() <= 50;
+    }
+
+    function validStaffOrderData(data) {
+      return data.keys().hasOnly([
+          'userId', 'orderId', 'customer', 'tableId', 'table', 'notes', 'items', 'status', 'timestamp',
+          'statusUpdatedBy', 'statusUpdatedAt'
+        ])
+        && data.keys().hasAll([
+          'userId', 'customer', 'table', 'items', 'status', 'timestamp'
+        ])
+        && data.userId is string
+        && validCustomer(data.customer)
+        && validTable(data.table)
+        && (!('tableId' in data) || validTable(data.tableId))
+        && (!('orderId' in data) || (data.orderId is string && data.orderId.matches('^#[A-Z0-9]{4,8}$')))
+        && (!('notes' in data) || validNotes(data.notes))
+        && validOrderItems(data.items)
+        && isActiveOrder(data.status)
+        && data.timestamp is timestamp
+        && (!('statusUpdatedBy' in data) || data.statusUpdatedBy == request.auth.uid)
+        && (!('statusUpdatedAt' in data) || data.statusUpdatedAt == request.time);
+    }
+
+    match /artifacts/{appId}/public/data/users/{userId} {
+      allow read: if appId == 'kingmenu-caa89'
+        && signedIn()
+        && (userId == request.auth.uid || isOwner(appId));
+      allow create, update, delete: if false;
+    }
+
+    match /artifacts/{appId}/public/data/products/{productId} {
+      allow read: if appId == 'kingmenu-caa89';
+      allow create, update, delete: if appId == 'kingmenu-caa89' && isOwner(appId);
+    }
+
+    match /artifacts/{appId}/public/data/categories/{categoryId} {
+      allow read: if appId == 'kingmenu-caa89';
+      allow create, update, delete: if appId == 'kingmenu-caa89' && isOwner(appId);
+    }
+
+    match /artifacts/{appId}/public/data/reviews/{reviewId} {
+      allow read: if appId == 'kingmenu-caa89';
+      allow create: if appId == 'kingmenu-caa89'
+        && signedIn()
+        && reviewId == request.auth.uid + '_' + request.resource.data.productId
+        && request.resource.data.keys().hasOnly([
+          'productId', 'rating', 'comment', 'userId', 'date', 'timestamp'
+        ])
+        && request.resource.data.keys().hasAll([
+          'productId', 'rating', 'comment', 'userId', 'date', 'timestamp'
+        ])
+        && request.resource.data.productId is string
+        && request.resource.data.productId.size() > 0
+        && request.resource.data.productId.size() <= 128
+        && request.resource.data.rating is int
+        && request.resource.data.rating >= 1
+        && request.resource.data.rating <= 5
+        && request.resource.data.comment is string
+        && request.resource.data.comment.size() <= 1000
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.date is string
+        && request.resource.data.date.size() <= 40
+        && request.resource.data.timestamp == request.time;
+      allow update, delete: if appId == 'kingmenu-caa89' && isOwner(appId);
+    }
+
+    match /artifacts/{appId}/public/data/staffOrders/{orderId} {
+      allow get, list: if appId == 'kingmenu-caa89'
+        && (isOwner(appId)
+          || (isEmployee(appId) && isActiveOrder(resource.data.status)));
+
+      allow create: if appId == 'kingmenu-caa89'
+        && isOwner(appId)
+        && validStaffOrderData(request.resource.data);
+
+      allow update: if appId == 'kingmenu-caa89'
+        && (isOwner(appId)
+          || (isEmployee(appId)
+            && isActiveOrder(resource.data.status)
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+              'status', 'statusUpdatedBy', 'statusUpdatedAt'
+            ])
+            && validOrderStatusTransition()
+            && validOrderStatusAudit()));
+      allow delete: if appId == 'kingmenu-caa89'
+        && (isOwner(appId) || (isEmployee(appId) && isActiveOrder(resource.data.status)));
+    }
+
+    match /artifacts/{appId}/public/data/orders/{orderId} {
+      allow get, list: if appId == 'kingmenu-caa89'
+        && (isOwner(appId)
+          || (!isStaff(appId) && signedIn() && resource.data.userId == request.auth.uid));
+
+      allow create: if false;
+
+      allow update: if appId == 'kingmenu-caa89'
+        && (isOwner(appId)
+          || (isEmployee(appId)
+            && isActiveOrder(resource.data.status)
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+              'status', 'statusUpdatedBy', 'statusUpdatedAt'
+            ])
+            && validOrderStatusTransition()
+            && validOrderStatusAudit()));
+      allow delete: if appId == 'kingmenu-caa89' && isOwner(appId);
+    }
+
+    match /artifacts/{appId}/public/data/calls/{callId} {
+      allow create: if false;
+      allow read, delete: if appId == 'kingmenu-caa89' && isStaff(appId);
+      allow update: if false;
+    }
+
+    match /artifacts/{appId}/public/data/config/{configId} {
+      allow read: if appId == 'kingmenu-caa89';
+      allow write: if appId == 'kingmenu-caa89' && isOwner(appId);
+    }
+  }
+}

@@ -1,0 +1,21 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isOwner(appId) {
+      let userPath = /databases/(default)/documents/artifacts/$(appId)/public/data/users/$(request.auth.uid);
+      return request.auth != null
+        && appId == 'kingmenu-caa89'
+        && firestore.get(userPath).data.role == 'owner'
+        && request.auth.token.firebase.sign_in_second_factor in ['phone', 'totp'];
+    }
+
+    match /products/{appId}/{productId}/{imageFile} {
+      allow read: if appId == 'kingmenu-caa89';
+      allow create, update: if isOwner(appId)
+        && request.resource.size <= 1 * 1024 * 1024
+        && request.resource.contentType == 'image/webp';
+      allow delete: if isOwner(appId);
+    }
+  }
+}
